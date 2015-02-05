@@ -12,6 +12,7 @@
 #include <cplex.h>
 #include "lp.h"
 #include "util.h"
+#include <iostream>
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
@@ -20,13 +21,14 @@ static int parseargs (int ac, char **av);
 static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int euclid_edgelen (int i, int j, double *x, double *y);
 
-static int solve(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
-static int connect(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
+static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
+static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
 
 static char *fname = (char *) NULL;
 static int debug = 0;
 static int seed = 0;
 static int geometric_data = 0;
+static int TVAL = 10000000;
 
 int main (int ac, char **av)
 {
@@ -164,6 +166,8 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
     }
     fflush (stdout);
 
+	solve(&lp,ncount,ecount,elist,elen,tlist);
+
 CLEANUP:
     CO759lp_free (&lp);
     if (x) free (x);
@@ -171,13 +175,42 @@ CLEANUP:
 }
 
 
-static int solve(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
+static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
+	double * x;
+	int i, frac = -1, rval;
 	int bound = connect(lp,ncount,ecount,elist,elen,tlist);
+	if( bound >= TVAL ) {
+		return 0;
+	} else {
+		x = new double[ecount];	
+		if( !x ) {
+			std::cerr << "out of memory for x" << std::endl;
+			return 1;
+		}
+		rval = CO759lp_x(lp, x);
+		if(rval) {
+			std::cerr << "CO759lp_x failed" << std::endl;
+		}
+		
+		for(i = 0; i < ecount; i++ ) {
+			if( x[i] > LP_EPSILON && x[i] < (1-LP_EPSILON) ) {
+				std::cout << "Fractional edge " << elist[2*i] << " " << elist[2*i+1] << " " << x[i] << std::endl; 
+				frac = i;
+				break;
+			}	
+		}
+		if( frac == -1 ) {
+			std::cerr << "No fractional edge found" << std::endl;
+			return 2;
+		} 
+		
+	}
+	
 	return 0;	
 }
 
 
-static int connect(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
+static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
 	return 0;
 }
 
