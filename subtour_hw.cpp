@@ -20,6 +20,9 @@ static int parseargs (int ac, char **av);
 static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int euclid_edgelen (int i, int j, double *x, double *y);
 
+static int solve(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
+static int connect(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
+
 static char *fname = (char *) NULL;
 static int debug = 0;
 static int seed = 0;
@@ -166,6 +169,19 @@ CLEANUP:
     if (x) free (x);
     return rval;
 }
+
+
+static int solve(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
+	int bound = connect(lp,ncount,ecount,elist,elen,tlist);
+	return 0;	
+}
+
+
+static int connect(CO759 * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
+	return 0;
+}
+
+
 
 static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     int **p_elen)
