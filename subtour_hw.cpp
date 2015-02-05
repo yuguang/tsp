@@ -5,10 +5,10 @@
 /*                                                                          */
 /****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <getopt.h>
-#include <math.h>
+#include <cmath>
 #include <cplex.h>
 #include "lp.h"
 #include "util.h"
