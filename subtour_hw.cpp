@@ -13,6 +13,7 @@
 #include "lp.h"
 #include "util.h"
 #include <iostream>
+#include <vector>
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
