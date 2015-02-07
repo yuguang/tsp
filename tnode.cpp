@@ -14,6 +14,10 @@ tnode::~tnode() {
 
 void tnode::join(tnode * node) {
   tnode *this_p = this->find(), *node_p = node->find();
+  if (this_p == node_p) {
+    // if both have the same parent then there is no need for this join
+    return;
+  }
   if (this_p->rank > node_p->rank) {
     node_p->parent = this;
   } else {

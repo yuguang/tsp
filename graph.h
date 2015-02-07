@@ -2,10 +2,14 @@
 #define GRAPH_H
 
 #include <vector>
+#include "tnode.h"
 
 class graph {
 	private:
-		
+		tnode* nodes;
+                int ncount;
+                int ecount;
+                int *elist;
 
 	public:
 		graph();
@@ -20,7 +24,7 @@ class graph {
 
                 // returns a list of length ecount that indicates if each edge is in delta(s)
                 // TODO: would a vector of edges be more useful?
-                bool* delta(int *s, int ncount, int ecount, int *elist);
+                bool* delta(std::vector<int> s);
 
 };
 
