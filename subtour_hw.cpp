@@ -60,6 +60,7 @@ int main (int ac, char **av)
     }
 
     szeit = CO759_zeit ();
+    TVAL = nntour(ncount,ecount,elist,elen,tlist);
     rval = subtour (ncount, ecount, elist, elen, tlist);
     if (rval) {
         fprintf (stderr, "subtour failed\n");
@@ -166,7 +167,6 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
         }
     }
     fflush (stdout);
-    TVAL = nntour(ncount,ecount,elist,elen,tlist);
     solve(&lp,ncount,ecount,elist,elen,tlist);
 
 CLEANUP:
@@ -196,7 +196,7 @@ int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
         }
         len += best; end = bestend;
     }
-    return tour_len;
+    return len;
 }
 
 static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
