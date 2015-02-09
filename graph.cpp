@@ -38,7 +38,7 @@ std::vector<std::vector<int> > graph::get_components() {
   return components;
 }
 
-bool* graph::delta(std::vector<int> s) {
+std::vector<int> graph::delta(std::vector<int> s) {
   bool* in_s = new bool[this->ncount];
 
   // TODO: is there a better way to do this initialization in C++?
@@ -50,9 +50,11 @@ bool* graph::delta(std::vector<int> s) {
     in_s[s[i]] = true;
   }
 
-  bool* d = new bool[ecount];
+  std::vector<int> d;
   for (int i = 0; i < this->ecount; i++) {
-    d[i] = (in_s[this->elist[2*i]] != in_s[this->elist[2*i+1]]);
+    if (in_s[this->elist[2*i]] != in_s[this->elist[2*i+1]]) {
+      d.push_back(i);
+    }
   }
   return d;
 }

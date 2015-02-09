@@ -22,9 +22,8 @@ class graph {
 
                 std::vector<std::vector<int> > get_components();
 
-                // returns a list of length ecount that indicates if each edge is in delta(s)
-                // TODO: would a vector of edges be more useful?
-                bool* delta(std::vector<int> s);
+                // returns a list of the indices of edges in delta(s)
+                std::vector<int> delta(std::vector<int> s);
 
 };
 
