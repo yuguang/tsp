@@ -1,4 +1,5 @@
 #include "graph.h"
+#include <map>
 
 graph::graph() {
 }
@@ -33,8 +34,22 @@ bool graph::is_connected() {
 }
 
 std::vector<std::vector<int> > graph::get_components() {
-  // TODO
   std::vector<std::vector<int> > components;
+  std::map<int,int> cMap; // maps label of node to index in components vector
+  int componentCount = 0;
+  for (int i = 0; i < this->ncount; i++) {
+    int label = nodes[i].find_label();
+    if (cMap.find(label) == cMap.end()) {
+      // this label has not been seen before
+      cMap[label] = componentCount;
+      componentCount++;
+      std::vector<int> newVector;
+      newVector.push_back(i);
+      components.push_back(newVector);
+    } else {
+      (components[cMap[label]]).push_back(i);
+    }
+  }
   return components;
 }
 
