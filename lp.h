@@ -22,6 +22,8 @@ int CO759lp_addrows (CO759lp *lp, int newrows, int newnz, double *rhs,
     char *sense, int *rmatbeg, int *rmatind, double *rmatval);
 int CO759lp_addcols (CO759lp *lp, int newcols, int newnz, double *obj,
     int *cmatbeg, int *cmatind, double *cmatval, double *lb, double *ub);
+int CO759lp_chgbds (CO759lp *lp, int cnt, const int *indices,
+	const char *lu, const double *bd);
 
 int CO759lp_opt (CO759lp *lp, int *infeasible);
 int CO759lp_objval (CO759lp *lp, double *obj);

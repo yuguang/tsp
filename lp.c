@@ -106,6 +106,17 @@ CLEANUP:
     return rval;
 }
 
+int CO759lp_chgbds (CO759lp *lp, int cnt, const int *indices,
+	const char *lu, const double *bd)
+{
+	int rval = 0;
+	rval = CPXchgbds(lp->cplex_env, lp->cplex_lp, cnt, indices, lu, bd);
+	if (rval) { fprintf (stderr, "CPXchgbds failed\n"); goto CLEANUP; }
+	
+CLEANUP:
+	return rval;
+}
+
 int CO759lp_opt (CO759lp *lp, int *infeasible)
 {
     int rval = 0, solstat;

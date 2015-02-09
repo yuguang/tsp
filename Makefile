@@ -1,4 +1,4 @@
-SUBTOUROBJS= subtour_hw.o lp.o util.o
+SUBTOUROBJS= subtour_hw.o lp.o util.o graph.o tnode.o
 CPLEX_LIB = /software/cplex/distribution/cplex/lib/x86-64_linux/static_pic/libcplex.a
 CPLEX_INCLUDE = /software/cplex/distribution/cplex/include/ilcplex
 
@@ -12,6 +12,8 @@ subtour: $(SUBTOUROBJS)
 clean:
 	rm -f *.o subtour
 
-subtour_hw.o: subtour_hw.cpp util.h
+subtour_hw.o: subtour_hw.cpp util.h graph.h
 lp.o: lp.c lp.h
 util.o: util.c util.h
+graph.o: graph.cpp graph.h tnode.h
+tnode.o: tnode.cpp tnode.h
