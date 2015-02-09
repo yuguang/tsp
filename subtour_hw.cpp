@@ -60,7 +60,7 @@ int main (int ac, char **av)
     }
 
     szeit = CO759_zeit ();
-    TVAL = nntour(ncount,ecount,elist,elen,tlist);
+    //TVAL = nntour(ncount,ecount,elist,elen,tlist);
     rval = subtour (ncount, ecount, elist, elen, tlist);
     if (rval) {
         fprintf (stderr, "subtour failed\n");
@@ -179,6 +179,7 @@ CLEANUP:
 // elist[2*i+1] is end1 of ith edge
 // elen - array ecount
 // elen[i] is length of ith edge
+/*
 int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
 {
     int start = 0;
@@ -198,7 +199,7 @@ int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
     }
     return len;
 }
-
+*/
 static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
 	double * x;
 	int i, frac = -1, rval;
@@ -248,11 +249,13 @@ static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, in
 		// Change bounds back to 0, 1
 		bd[0] = 0.0; bd[1] = 1.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
+		delete [] x;
 	}
 	
 	return 0;
 }
 
+// temp class to test creation of constraint
 class subgraph {
 	public:
 		std::vector<int> delta;
@@ -262,9 +265,11 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 	int rval;
 	
 	std::vector<subgraph> subgraphs;
+	/*
 	subgraph S;
 	S.delta.push_back(0); S.delta.push_back(2); S.delta.push_back(5);
 	subgraphs.push_back(S);
+	*/
 	
 	// Add delta constraints to LP
 	double rhs[1] = {2.0};
@@ -282,9 +287,17 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 			rmatind[j] = subgraphs[i].delta[j];
 			rmatval[j] = 1.0;
 		}
-		CO759lp_addrows (lp, 1, newnz, rhs, sense, rmatbeg, rmatind, rmatval);
+		rval = CO759lp_addrows (lp, 1, newnz, rhs, sense, rmatbeg, rmatind, rmatval);
+		if( rval ) { std::cerr << "CO759lp_create failed" << std::endl; goto CLEANUP; }
+		delete [] rmatbeg; rmatbeg = NULL;
+		delete [] rmatind; rmatind = NULL;
+		delete [] rmatval; rmatval = NULL;
 	}
+	CO759lp_write(lp,"deltas.lp");
 CLEANUP:	
+	if( rmatbeg ) delete [] rmatbeg;
+	if( rmatind ) delete [] rmatind;
+	if( rmatval ) delete [] rmatval;
 	return rval;
 }
 
