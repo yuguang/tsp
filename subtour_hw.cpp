@@ -250,12 +250,42 @@ static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, in
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
 	}
 	
-	return 0;	
+	return 0;
 }
 
+class subgraph {
+	public:
+		std::vector<int> delta;
+};
 
 static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
-	return 0;
+	int rval;
+	
+	std::vector<subgraph> subgraphs;
+	subgraph S;
+	S.delta.push_back(0); S.delta.push_back(2); S.delta.push_back(5);
+	subgraphs.push_back(S);
+	
+	// Add delta constraints to LP
+	double rhs[1] = {2.0};
+	char sense[1] = {'G'};
+	int newnz, *rmatbeg, *rmatind;
+	double *rmatval;
+	for(unsigned i = 0; i < subgraphs.size(); i++ ) {
+		if( rval ) { std::cerr << "CO759lp_create failed" << std::endl; goto CLEANUP; }
+		newnz = subgraphs[i].delta.size();
+		rmatbeg = new int[newnz];
+		rmatind = new int[newnz];
+		rmatval = new double[newnz];
+		for(int j = 0; j < newnz; j++ ) {
+			rmatbeg[j] = 0;
+			rmatind[j] = subgraphs[i].delta[j];
+			rmatval[j] = 1.0;
+		}
+		CO759lp_addrows (lp, 1, newnz, rhs, sense, rmatbeg, rmatind, rmatval);
+	}
+CLEANUP:	
+	return rval;
 }
 
 
