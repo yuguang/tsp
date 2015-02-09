@@ -1,0 +1,25 @@
+// DONE: get g++ & makefile working
+
+main() {
+
+// TODO: generate initial upper bound (nearest neighbour). Assignee: Yuguang
+
+}
+
+solve() {
+
+// TODO: choose a fracitonal edge. Assignee: Ian (possible heuristic: look at cost of subproblems?)
+// TODO: Branch to x_e = 0 and x_e = 1. Assignee: Ian
+// TODO: cache/restore optimal basis for second recursive call Assignee: Yuguang
+
+}
+
+connect() {
+
+// Solve degree LP
+// TODO: Generate support G from LP solution x. Assignee: Shawn
+// TODO: Find connected subcomponents of G. Assignee: Shawn
+// TODO: Find delta(S), edges leaving each subcomponent. Assignee: Shawn
+// TODO: generate and update LP with constraints for delta(S)s. Assignee: Ian
+
+}
