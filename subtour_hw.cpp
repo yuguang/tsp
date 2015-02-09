@@ -200,11 +200,31 @@ static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, in
 				break;
 			}	
 		}
+
+		frac = 0;
 		if( frac == -1 ) {
 			std::cerr << "No fractional edge found" << std::endl;
 			return 2;
 		} 
 		
+		int cnt = 2;
+		int indices[2]; indices[0] = frac; indices[1] = frac;
+		char lu[2] = {'L','U'};
+		double bd[2];
+		
+		// Change fractional edge to be 0
+		bd[0] = 0.0; bd[1] = 0.0;
+		CO759lp_chgbds(lp,cnt,indices,lu,bd);
+		//solve(lp,ncount,ecount,elist,elen,tlist);
+		
+		// Change fractional edge to be 1
+		bd[0] = 1.0; bd[1] = 1.0;
+		CO759lp_chgbds(lp,cnt,indices,lu,bd);
+		//solve(lp,ncount,ecount,elist,elen,tlist);
+		
+		// Change bounds back to 0, 1
+		bd[0] = 0.0; bd[1] = 1.0;
+		CO759lp_chgbds(lp,cnt,indices,lu,bd);
 	}
 	
 	return 0;	
