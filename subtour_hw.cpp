@@ -165,15 +165,40 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
         }
     }
     fflush (stdout);
-
-	solve(&lp,ncount,ecount,elist,elen,tlist);
+    TVAL = nntour(ncount,ecount,elist,elen,tlist);
+    solve(&lp,ncount,ecount,elist,elen,tlist);
 
 CLEANUP:
     CO759lp_free (&lp);
     if (x) free (x);
     return rval;
 }
+// elist - array 2*ecount
+// elist[2*i] is end0 of ith edge
+// elist[2*i+1] is end1 of ith edge
+// elen - array ecount
+// elen[i] is length of ith edge
+int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
+{
+    int tour_len = 0;
+    int start = 0;
+    int marks = new double[ecount];
+    int i, j, best, bestend, end = start, len = 0;
 
+    for (i = 0; i < ncount; i++) marks[i] = 0;
+    tour_len += elen[end];
+    for (i = 1; i < ncount; i++) {
+        marks[end] = 1;
+        best = TVAL;
+        for (j = 0; j < ncount; j++) {
+            if (marks[j] == 0 && elen[j] < best) {
+                best = elen[j]; bestend = j;
+            }
+        }
+        len += best; end = bestend; tour_len += elen[end];
+    }
+    return tour_len;
+}
 
 static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
 	double * x;
