@@ -181,13 +181,11 @@ CLEANUP:
 // elen[i] is length of ith edge
 int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
 {
-    int tour_len = 0;
     int start = 0;
     int marks = new double[ecount];
     int i, j, best, bestend, end = start, len = 0;
 
     for (i = 0; i < ncount; i++) marks[i] = 0;
-    tour_len += elen[end];
     for (i = 1; i < ncount; i++) {
         marks[end] = 1;
         best = TVAL;
@@ -196,7 +194,7 @@ int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
                 best = elen[j]; bestend = j;
             }
         }
-        len += best; end = bestend; tour_len += elen[end];
+        len += best; end = bestend;
     }
     return tour_len;
 }
