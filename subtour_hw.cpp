@@ -22,6 +22,7 @@ static int parseargs (int ac, char **av);
 static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int euclid_edgelen (int i, int j, double *x, double *y);
 
+static int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
 
@@ -60,7 +61,8 @@ int main (int ac, char **av)
     }
 
     szeit = CO759_zeit ();
-    //TVAL = nntour(ncount,ecount,elist,elen,tlist);
+    TVAL = nntour(ncount,ecount,elist,elen,tlist);
+    printf ("Nearest neighbor tour: %d\n", TVAL);
     rval = subtour (ncount, ecount, elist, elen, tlist);
     if (rval) {
         fprintf (stderr, "subtour failed\n");
@@ -179,12 +181,12 @@ CLEANUP:
 // elist[2*i+1] is end1 of ith edge
 // elen - array ecount
 // elen[i] is length of ith edge
-/*
+
 int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
 {
     int start = 0;
-    int marks = new double[ecount];
-    int i, j, best, bestend, end = start, len = 0;
+    int *marks = new int[ecount];
+    int i, j, best, bestend = 0, end = start, len = 0;
 
     for (i = 0; i < ncount; i++) marks[i] = 0;
     for (i = 1; i < ncount; i++) {
@@ -199,7 +201,7 @@ int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
     }
     return len;
 }
-*/
+
 static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
 	double * x;
 	int i, frac = -1, rval;
