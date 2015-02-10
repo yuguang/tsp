@@ -14,6 +14,7 @@
 #include "util.h"
 #include <iostream>
 #include <vector>
+#include "graph.h"
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
@@ -36,7 +37,7 @@ int main (int ac, char **av)
 {
     int rval  = 0, ncount = 0, ecount = 0;
     int *elist = (int *) NULL, *elen = (int *) NULL, *tlist = (int *) NULL;
-    double szeit, wt;
+    double szeit;
 
     seed = (int) CO759_real_zeit ();
 
@@ -70,9 +71,6 @@ int main (int ac, char **av)
     }
     printf ("Running Time: %.2f seconds\n", CO759_zeit() - szeit);
     fflush (stdout);
-
-    wt = 0.0;
-    printf ("Optimal Tour: %.0f\n", wt); fflush (stdout);
 
 CLEANUP:
 
@@ -141,7 +139,7 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
 
     rval = CO759lp_objval (&lp, &objval);
     if (rval) {
-        fprintf (stderr, "CO759lp_objval failed\n"); goto CLEANUP;
+        fprintf (stderr, "CO759lp_objval failed 1\n"); goto CLEANUP;
     }
 
     printf ("Degree-Equation LP Value: %f\n", objval);
@@ -169,8 +167,11 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
         }
     }
     fflush (stdout);
+	
     solve(&lp,ncount,ecount,elist,elen,tlist);
 
+	std::cout << "Optimal Tour " << TVAL << std::endl;
+	
 CLEANUP:
     CO759lp_free (&lp);
     if (x) free (x);
@@ -203,34 +204,55 @@ int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
 }
 
 static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
-	double * x;
-	int i, frac = -1, rval;
-	int bound = connect(lp,ncount,ecount,elist,elen,tlist);
+	double * x = NULL;
+	int i, frac = -1, rval, infeasible = 0;
+	double bound;
+	
+	rval = CO759lp_opt (lp, &infeasible);
+	if (rval) {
+		fprintf (stderr, "CO759lp_opt failed\n"); goto CLEANUP;
+	}
+	if (infeasible) {
+		fprintf (stderr, "LP is infeasible\n"); 
+		rval = 1; goto CLEANUP;
+	}
+	
+	connect(lp,ncount,ecount,elist,elen,tlist);
+	
+	rval = CO759lp_objval (lp, &bound);
+    if (rval) {
+        fprintf (stderr, "CO759lp_objval failed 3\n"); goto CLEANUP;
+    }
+	
 	if( bound >= TVAL ) {
-		return 0;
+		rval = 0;
+		goto CLEANUP;
 	} else {
 		x = new double[ecount];	
 		if( !x ) {
 			std::cerr << "out of memory for x" << std::endl;
-			return 1;
+			rval = 1;
+			goto CLEANUP;
 		}
 		rval = CO759lp_x(lp, x);
 		if(rval) {
-			std::cerr << "CO759lp_x failed" << std::endl;
+			std::cerr << "CO759lp_x failed" << std::endl; goto CLEANUP;
 		}
 		
 		for(i = 0; i < ecount; i++ ) {
 			if( x[i] > LP_EPSILON && x[i] < (1-LP_EPSILON) ) {
-				std::cout << "Fractional edge " << elist[2*i] << " " << elist[2*i+1] << " " << x[i] << std::endl; 
+				//std::cout << "Fractional edge " << elist[2*i] << " " << elist[2*i+1] << " " << x[i] << std::endl; 
 				frac = i;
 				break;
 			}	
 		}
 
-		frac = 0;
 		if( frac == -1 ) {
-			std::cerr << "No fractional edge found" << std::endl;
-			return 2;
+			//std::cout << "No fractional edge " << std::endl;
+			//std::cout << "Setting TVAL to: " << bound << std::endl;
+			TVAL = bound;
+			rval = 0;
+			goto CLEANUP;
 		} 
 		
 		int cnt = 2;
@@ -241,61 +263,84 @@ static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, in
 		// Change fractional edge to be 0
 		bd[0] = 0.0; bd[1] = 0.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
-		//solve(lp,ncount,ecount,elist,elen,tlist);
+		solve(lp,ncount,ecount,elist,elen,tlist);
 		
 		// Change fractional edge to be 1
 		bd[0] = 1.0; bd[1] = 1.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
-		//solve(lp,ncount,ecount,elist,elen,tlist);
+		solve(lp,ncount,ecount,elist,elen,tlist);
 		
 		// Change bounds back to 0, 1
 		bd[0] = 0.0; bd[1] = 1.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
-		delete [] x;
+		delete [] x; x = NULL;
 	}
 	
-	return 0;
+CLEANUP:
+	if( x ) delete [] x;
+
+	return rval;
 }
 
-// temp class to test creation of constraint
-class subgraph {
-	public:
-		std::vector<int> delta;
-};
-
 static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
-	int rval;
-	
-	std::vector<subgraph> subgraphs;
-	/*
-	subgraph S;
-	S.delta.push_back(0); S.delta.push_back(2); S.delta.push_back(5);
-	subgraphs.push_back(S);
-	*/
-	
-	// Add delta constraints to LP
+	int rval, infeasible = 0;
+	double * x;
 	double rhs[1] = {2.0};
 	char sense[1] = {'G'};
 	int newnz, *rmatbeg, *rmatind;
 	double *rmatval;
-	for(unsigned i = 0; i < subgraphs.size(); i++ ) {
-		if( rval ) { std::cerr << "CO759lp_create failed" << std::endl; goto CLEANUP; }
-		newnz = subgraphs[i].delta.size();
-		rmatbeg = new int[newnz];
-		rmatind = new int[newnz];
-		rmatval = new double[newnz];
-		for(int j = 0; j < newnz; j++ ) {
-			rmatbeg[j] = 0;
-			rmatind[j] = subgraphs[i].delta[j];
-			rmatval[j] = 1.0;
-		}
-		rval = CO759lp_addrows (lp, 1, newnz, rhs, sense, rmatbeg, rmatind, rmatval);
-		if( rval ) { std::cerr << "CO759lp_create failed" << std::endl; goto CLEANUP; }
-		delete [] rmatbeg; rmatbeg = NULL;
-		delete [] rmatind; rmatind = NULL;
-		delete [] rmatval; rmatval = NULL;
+	
+	x = new double[ecount];	
+	if( !x ) {
+		std::cerr << "out of memory for x" << std::endl;
+		return 1;
 	}
-	CO759lp_write(lp,"deltas.lp");
+	rval = CO759lp_x(lp, x);
+	if(rval) {
+		std::cerr << "CO759lp_x failed" << std::endl;
+	}
+	
+	graph support;
+	support.init(x, ncount, ecount, elist);
+	
+	while( !support.is_connected() ) {
+		std::vector<std::vector<int> > components = support.get_components();
+		// Add delta constraints to LP
+		for(unsigned i = 0; i < components.size(); i++ ) {
+			newnz = support.delta(components[i]).size();
+			rmatbeg = new int[newnz];
+			rmatind = new int[newnz];
+			rmatval = new double[newnz];
+			for(int j = 0; j < newnz; j++ ) {
+				rmatbeg[j] = 0;
+				rmatind[j] = support.delta(components[i])[j];
+				rmatval[j] = 1.0;
+			}
+			rval = CO759lp_addrows (lp, 1, newnz, rhs, sense, rmatbeg, rmatind, rmatval);
+			if( rval ) { std::cerr << "CO759lp_create failed" << std::endl; goto CLEANUP; }
+			delete [] rmatbeg; rmatbeg = NULL;
+			delete [] rmatind; rmatind = NULL;
+			delete [] rmatval; rmatval = NULL;
+		}
+		
+		rval = CO759lp_opt (lp, &infeasible);
+		if (rval) {
+			fprintf (stderr, "CO759lp_opt failed\n"); goto CLEANUP;
+		}
+		if (infeasible) {
+			fprintf (stderr, "LP is infeasible\n"); 
+			rval = 1; goto CLEANUP;
+		}
+		rval = CO759lp_x(lp, x);
+		if(rval) {
+			std::cerr << "CO759lp_x failed" << std::endl;
+		}
+		
+		support = graph();
+		support.init(x, ncount, ecount, elist);
+	}
+
+	//CO759lp_write(lp,"deltas.lp");
 CLEANUP:	
 	if( rmatbeg ) delete [] rmatbeg;
 	if( rmatind ) delete [] rmatind;
@@ -365,7 +410,7 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     	    if (fscanf(f,"%lf %lf",&x[i], &y[i]) != 2) {
 	        fprintf (stderr, "%s has invalid input format\n", filename);
                 rval = 1;  goto CLEANUP;
-	    }
+			}
         }
 
         ecount = (ncount * (ncount - 1)) / 2;

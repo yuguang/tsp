@@ -10,6 +10,7 @@ void graph::init(double * x, int ncount, int ecount, int *elist) {
   this->ecount = ecount;
   this->elist = elist;
   this->nodes = new tnode[ncount];
+  for(int i = 0; i < ncount; i++ ) nodes[i].init(i);
 
   for (int i = 0; i < ecount; i++) {
     // TODO: should we have a different cutoff? like 0.0001?
