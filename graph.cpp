@@ -5,12 +5,13 @@ graph::graph() {
 }
 
 void graph::init(double * x, int ncount, int ecount, int *elist) {
-
   this->ncount = ncount;
   this->ecount = ecount;
   this->elist = elist;
   this->nodes = new tnode[ncount];
-
+  for (int i = 0; i < ncount; i++) {
+    nodes[i].init(i);
+  }
   for (int i = 0; i < ecount; i++) {
     // TODO: should we have a different cutoff? like 0.0001?
     if (x[i] > 0) {
@@ -21,7 +22,6 @@ void graph::init(double * x, int ncount, int ecount, int *elist) {
 
 graph::~graph() {
 }
-
 
 bool graph::is_connected() {
   int label1 = this->nodes[0].find_label();
