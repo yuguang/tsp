@@ -24,7 +24,7 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int euclid_edgelen (int i, int j, double *x, double *y);
 
 static int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist);
-static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
+static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
 
 static char *fname = (char *) NULL;
@@ -85,6 +85,7 @@ CLEANUP:
 static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
 {
     int rval = 0, i, j, infeasible = 0;
+    int bbcount = 0;
     double  obj[1], lb[1], ub[1], objval, *x = (double *) NULL;
     int     cmatbeg[1], cmatind[2];
     double  cmatval[2];
@@ -160,6 +161,7 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
         if (x[j] > LP_EPSILON) i++;
     }
 
+/*
     printf ("LP graph has %d edges\n", i);
     for (j = 0; j < ecount; j++) {
         if (x[j] > LP_EPSILON) {
@@ -167,10 +169,14 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
         }
     }
     fflush (stdout);
+*/
 	
-    solve(&lp,ncount,ecount,elist,elen,tlist);
+    solve(0, &bbcount, &lp,ncount,ecount,elist,elen,tlist);
 
 	std::cout << "Optimal Tour " << TVAL << std::endl;
+
+    printf ("Total Number of Search Nodes: %d\n", bbcount);
+    fflush (stdout);
 	
 CLEANUP:
     CO759lp_free (&lp);
@@ -200,13 +206,16 @@ int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
         }
         len += best; end = bestend;
     }
+	delete [] marks;
     return len;
 }
 
-static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
+static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
 	double * x = NULL;
 	int i, frac = -1, rval, infeasible = 0;
 	double bound;
+
+        (*bbcount)++;
 	
 	rval = CO759lp_opt (lp, &infeasible);
 	if (rval) {
@@ -223,6 +232,9 @@ static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, in
     if (rval) {
         fprintf (stderr, "CO759lp_objval failed 3\n"); goto CLEANUP;
     }
+
+    printf ("Depth %d, BBcount: %d,  Bound: %.3f, TVAL: %d\n", depth, *bbcount, bound, TVAL);
+    fflush (stdout);
 	
 	if( bound >= TVAL ) {
 		rval = 0;
@@ -263,12 +275,12 @@ static int solve(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, in
 		// Change fractional edge to be 0
 		bd[0] = 0.0; bd[1] = 0.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
-		solve(lp,ncount,ecount,elist,elen,tlist);
+		solve(depth+1,bbcount,lp,ncount,ecount,elist,elen,tlist);
 		
 		// Change fractional edge to be 1
 		bd[0] = 1.0; bd[1] = 1.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
-		solve(lp,ncount,ecount,elist,elen,tlist);
+		solve(depth+1,bbcount,lp,ncount,ecount,elist,elen,tlist);
 		
 		// Change bounds back to 0, 1
 		bd[0] = 0.0; bd[1] = 1.0;
@@ -289,18 +301,20 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 	char sense[1] = {'G'};
 	int newnz, *rmatbeg, *rmatind;
 	double *rmatval;
+	graph support;
 	
 	x = new double[ecount];	
 	if( !x ) {
 		std::cerr << "out of memory for x" << std::endl;
-		return 1;
+		rval = 1;
+		goto CLEANUP;
 	}
 	rval = CO759lp_x(lp, x);
 	if(rval) {
 		std::cerr << "CO759lp_x failed" << std::endl;
+		goto CLEANUP;
 	}
 	
-	graph support;
 	support.init(x, ncount, ecount, elist);
 	
 	while( !support.is_connected() ) {
@@ -336,6 +350,7 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 			std::cerr << "CO759lp_x failed" << std::endl;
 		}
 		
+		support.graph::~graph();
 		support = graph();
 		support.init(x, ncount, ecount, elist);
 	}
@@ -345,6 +360,7 @@ CLEANUP:
 	if( rmatbeg ) delete [] rmatbeg;
 	if( rmatind ) delete [] rmatind;
 	if( rmatval ) delete [] rmatval;
+	if( x ) delete [] x;
 	return rval;
 }
 

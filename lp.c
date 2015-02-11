@@ -34,6 +34,7 @@ void CO759lp_free (CO759lp *lp)
             if (lp->cplex_lp) {
                 CPXfreeprob (lp->cplex_env, &(lp->cplex_lp));
             } 
+			CPXcloseCPLEX(&(lp->cplex_env));
             lp->cplex_env = (CPXENVptr) NULL;
         }
     }

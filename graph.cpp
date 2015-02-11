@@ -2,6 +2,7 @@
 #include <map>
 
 graph::graph() {
+	nodes = NULL;
 }
 
 void graph::init(double * x, int ncount, int ecount, int *elist) {
@@ -21,6 +22,7 @@ void graph::init(double * x, int ncount, int ecount, int *elist) {
 }
 
 graph::~graph() {
+	if( nodes ) delete [] nodes;
 }
 
 bool graph::is_connected() {
@@ -71,5 +73,6 @@ std::vector<int> graph::delta(std::vector<int> s) {
       d.push_back(i);
     }
   }
+  delete [] in_s;
   return d;
 }
