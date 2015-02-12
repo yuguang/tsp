@@ -1,5 +1,6 @@
 #include "graph.h"
 #include <map>
+#include <cstdio>
 
 graph::graph() {
 	nodes = NULL;

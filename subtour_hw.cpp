@@ -299,8 +299,8 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 	double * x;
 	double rhs[1] = {2.0};
 	char sense[1] = {'G'};
-	int newnz, *rmatbeg, *rmatind;
-	double *rmatval;
+	int newnz, *rmatbeg = NULL, *rmatind = NULL;
+	double *rmatval = NULL;
 	graph support;
 	
 	x = new double[ecount];	
