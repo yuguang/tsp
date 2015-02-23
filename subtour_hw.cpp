@@ -476,6 +476,8 @@ static int euclid_edgelen (int i, int j, double *x, double *y)
 static int parseargs (int ac, char **av)
 {
     int c;
+    int method = 1;
+    int rand_inst = 1;
 
     while ((c = getopt (ac, av, "dgs:")) != EOF) {
         switch (c) {
@@ -487,6 +489,12 @@ static int parseargs (int ac, char **av)
             break;
         case 's':
             seed = atoi (optarg);
+            break;
+        case 'r':
+            rand_inst = 1;
+            break;
+        case 'k':
+            method = atoi (optarg);
             break;
         case '?':
         default:
@@ -510,5 +518,11 @@ static void usage (char *f)
     fprintf (stderr, "   -d    turn on debugging\n");
     fprintf (stderr, "   -g    prob_file has x-y coordinates\n");
     fprintf (stderr, "   -s d  random seed\n");
+    fprintf (stderr, "   -r    generate random instances\n");
+    fprintf (stderr, "   -k d  \n");
+    fprintf (stderr, "         1. enumeration \n");
+    fprintf (stderr, "         2. Held-Karp spanning tree \n");
+    fprintf (stderr, "         3. Bellman-Held-Karp dynamic programming \n");
+    fprintf (stderr, "         4. Branch and bound linear programming \n");
 }
 
