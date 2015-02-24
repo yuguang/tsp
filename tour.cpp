@@ -10,6 +10,7 @@
 #include <getopt.h>
 #include <cmath>
 #include <cplex.h>
+#include <math.h>
 #include "lp.h"
 #include "util.h"
 #include <iostream>
@@ -18,6 +19,8 @@
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
+    int **p_elen);
+static int getrand (int ncount, int *ecount, int **p_elist,
     int **p_elen);
 static int parseargs (int ac, char **av);
 static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist);
@@ -31,7 +34,12 @@ static char *fname = (char *) NULL;
 static int debug = 0;
 static int seed = 0;
 static int geometric_data = 0;
+static int method = 1;
+static int rand_inst = 1;
+static int rand_nodes = 0;
+static int rand_edges = 0;
 static int TVAL = 10000000;
+static int BOUND = 1001;
 
 int main (int ac, char **av)
 {
@@ -49,10 +57,15 @@ int main (int ac, char **av)
     if (debug)  printf ("Debugging turned on\n");
     if (geometric_data) printf ("Geomtric data\n");
 
-    rval = getprob (fname, &ncount, &ecount, &elist, &elen);
-    if (rval) {
-        fprintf (stderr, "getprob failed\n");
-        goto CLEANUP;
+    if (rand_inst) {
+        ncount = rand_nodes;
+        getrand (ncount, &ecount, &elist, &elen);
+    } else {
+        rval = getprob (fname, &ncount, &ecount, &elist, &elen);
+        if (rval) {
+            fprintf (stderr, "getprob failed\n");
+            goto CLEANUP;
+        }
     }
 
     tlist = (int *) malloc ((ncount)*sizeof (int));
@@ -364,7 +377,45 @@ CLEANUP:
 	return rval;
 }
 
+static int getrand (int ncount, int *p_ecount, int **p_elist,
+    int **p_elen)
+{
+    int i, j, k, rval = 0;
+    double t1, t2;
+    int *elist = (int *) NULL, *elen = (int *) NULL;
+    elist = (int *) malloc (2 * ecount * sizeof (int));
+    if (!elist) {
+        fprintf (stderr, "out of memory for elist\n");
+        rval = 1;
+    }
 
+    elen = (int *) malloc (ecount * sizeof (int));
+    if (!elen) {
+        fprintf (stderr, "out of memory for elen\n");
+        rval = 1;
+    }
+
+    int *datx = (int *) malloc (ncount * sizeof (int));
+    int *daty = (int *) malloc (ncount * sizeof (int));
+    for (i = 0; i < ncount; i++) {
+        datx[i] = rand() % BOUND;
+        daty[i] = rand() % BOUND;
+    }
+    
+    int ecount = 0;
+    for (i = 0; i < ncount; i++) {
+        for (j = i+1; j < ncount; j++) {
+            elist[2*ecount] = i;
+            elist[2*ecount+1] = j;
+            elen[ecount] = euclid_edgelen (i, j, datx, daty);
+            ecount++;
+        }
+    }
+    *p_ecount = ecount;
+    *p_elist = elist;
+    *p_elen = elen;
+    return rval;
+}
 
 static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     int **p_elen)
@@ -476,8 +527,6 @@ static int euclid_edgelen (int i, int j, double *x, double *y)
 static int parseargs (int ac, char **av)
 {
     int c;
-    int method = 1;
-    int rand_inst = 1;
 
     while ((c = getopt (ac, av, "dgs:")) != EOF) {
         switch (c) {
@@ -492,6 +541,7 @@ static int parseargs (int ac, char **av)
             break;
         case 'r':
             rand_inst = 1;
+            rand_nodes = atoi (optarg);
             break;
         case 'k':
             method = atoi (optarg);
@@ -507,7 +557,9 @@ static int parseargs (int ac, char **av)
         usage (av[0]);
         return 1;
     }
-    fname = av[optind++];
+    if (!rand_inst) {
+        fname = av[optind++];
+    }
 
     return 0;
 }
@@ -518,7 +570,7 @@ static void usage (char *f)
     fprintf (stderr, "   -d    turn on debugging\n");
     fprintf (stderr, "   -g    prob_file has x-y coordinates\n");
     fprintf (stderr, "   -s d  random seed\n");
-    fprintf (stderr, "   -r    generate random instances\n");
+    fprintf (stderr, "   -r n  generate random instances with n nodes\n");
     fprintf (stderr, "   -k d  \n");
     fprintf (stderr, "         1. enumeration \n");
     fprintf (stderr, "         2. Held-Karp spanning tree \n");
