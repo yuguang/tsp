@@ -1,4 +1,4 @@
-SUBTOUROBJS= tour.o lp.o util.o graph.o tnode.o
+SUBTOUROBJS= tour.o lp.o util.o graph.o tnode.o bhk.o
 CPLEX_LIB = /software/cplex/distribution/cplex/lib/x86-64_linux/static_pic/libcplex.a
 CPLEX_INCLUDE = /software/cplex/distribution/cplex/include/ilcplex
 
@@ -21,3 +21,4 @@ util.o: util.c util.h
 graph.o: graph.cpp graph.h tnode.h
 tnode.o: tnode.cpp tnode.h
 test_graph.o: test_graph.cpp graph.h tnode.h
+bhk.o: bhk.cpp bhk.h

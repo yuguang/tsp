@@ -16,6 +16,7 @@
 #include <iostream>
 #include <vector>
 #include "graph.h"
+#include "bhk.h"
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
