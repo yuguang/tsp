@@ -21,6 +21,9 @@ class bhk {
 
 		// function to help generate subsets
 		std::vector<std::vector<int> > getSubsets(int size, int start, int end);
+		
+		// prints out a value in the dynamic programming table (for debugging)
+		void printDPval(std::vector<int> subset, int endcity, int value);
 
 	public:
 

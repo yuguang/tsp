@@ -9,11 +9,14 @@ CPPFLAGS=  -O3 -g -Wall -pedantic -Wno-long-long -I$(CPLEX_INCLUDE)
 tour: $(SUBTOUROBJS)
 	  $(CC) $(CPPFLAGS) -o tour $(SUBTOUROBJS) $(CPLEX_LIB) -lm -lpthread
 
+test_tour: test_tour.o bhk.o
+	  $(CC) $(CPPFLAGS) -o test_tour test_tour.o bhk.o -lm -lpthread
+
 test_graph: test_graph.o graph.o tnode.o
 	  $(CC) $(CPPFLAGS) -o test_graph test_graph.o graph.o tnode.o -lm -lpthread
 
 clean:
-	rm -f *.o tour test_graph
+	rm -f *.o tour test_graph test_tour
 
 tour.o: tour.cpp util.h graph.h
 lp.o: lp.c lp.h
@@ -22,3 +25,5 @@ graph.o: graph.cpp graph.h tnode.h
 tnode.o: tnode.cpp tnode.h
 test_graph.o: test_graph.cpp graph.h tnode.h
 bhk.o: bhk.cpp bhk.h
+test_tour.o: test_tour.cpp bhk.h
+

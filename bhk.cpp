@@ -1,5 +1,8 @@
 #include "bhk.h"
 #include <limits>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
 
 bhk::bhk() {
 
@@ -26,7 +29,7 @@ void bhk::init(int ncount, int ecount, int *elist, int *elen) {
 	this->elist = elist;
 	this->elen = elen;
 	for (int i = 0; i < ecount; i++) {
-		this->distance[std::make_pair(elist[2*i],elist[2*i+1])];
+		this->distance[std::make_pair(elist[2*i],elist[2*i+1])] = elen[i];
 	}
 }
 
@@ -62,24 +65,26 @@ int bhk::solve() {
 		keyVector.push_back(0);
 		keyVector.push_back(i);
 		DPmap[std::make_pair(keyVector,i)] = this->getDistance(0,i);
+		//this->printDPval(keyVector,i,this->getDistance(0,i));
 	}
 	for (int subset_size = 3; subset_size <= this->ncount; subset_size++) {
 		std::vector<std::vector<int> > subsets = this->getSubsets(subset_size, 0, this->ncount - 1);
 		for (unsigned int i = 0; i < subsets.size(); i++) {
-			for (int j = 0; j < subset_size; j++) {
+			for (int j = 1; j < subset_size; j++) {
 				int endCity = subsets[i][j];
+				std::vector<int> subset_minus_j = subsets[i];
+				subset_minus_j.erase(subset_minus_j.begin() + j);
 				int minVal = std::numeric_limits<int>::max();
 				for (int k = 1; k < subset_size; k++) {
 					if (k != j) {
-						std::vector<int> test_subset = subsets[i];
-						test_subset.erase(test_subset.begin() + k - 1);
-						int test_val = DPmap[std::make_pair(test_subset,endCity)] + this->getDistance(endCity,subsets[i][k]);
+						int test_val = DPmap[std::make_pair(subset_minus_j,subsets[i][k])] + this->getDistance(endCity,subsets[i][k]);
 						if (test_val < minVal) {
 							minVal = test_val;
 						}
 					}
 				}
 				DPmap[std::make_pair(subsets[i],endCity)] = minVal;
+				//this->printDPval(subsets[i],endCity,minVal);
 			}
 		}
 	}
@@ -95,5 +100,13 @@ int bhk::solve() {
 		}
 	}
 	return rVal;
+}
+
+void bhk::printDPval(std::vector<int> subset, int endcity, int value) {
+	printf("DP[{%d", subset[0]);
+	for (unsigned int i = 1; i < subset.size(); i++) {
+		printf(",%d", subset[i]);
+	}
+	printf("},%d] = %d\n", endcity, value);
 }
 
