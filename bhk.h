@@ -2,6 +2,7 @@
 #define bhk_H
 
 #include <map>
+#include <vector>
 
 // This class implements the Bellman-Held-Karp algorithm
 class bhk {
@@ -18,6 +19,9 @@ class bhk {
 		// stores the given distances from elen
 		std::map<std::pair<int,int>, int> distance;
 
+		// function to help generate subsets
+		std::vector<std::vector<int> > getSubsets(int size, int start, int end);
+
 	public:
 
 		bhk();
@@ -25,7 +29,7 @@ class bhk {
 
 		void init(int ncount, int ecount, int *elist, int *elen);
 
-		double solve();
+		int solve();
 
 		// TODO: do we need the actual solution or just the optimal length?
 
