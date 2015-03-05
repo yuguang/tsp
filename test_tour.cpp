@@ -1,11 +1,9 @@
 #include <cstdio>
-#include <cstdlib>
-#include <iostream>
 #include <vector>
 #include "bhk.h"
 
-void checkValue(int testNumber, int expectedValue, int testValue) {
-	printf("Test %d: ", testNumber);
+void checkValue(const char *method, int expectedValue, int testValue) {
+	printf("  %s: ", method);
 	if (testValue == expectedValue) {
 		printf("PASSED\n");
 	} else {
@@ -24,8 +22,8 @@ int main (int ac, char **av) {
 	int elist1[] = {0,1};
 	int elen1[] = {3};
 	bhk_solver1->init(ncount1, ecount1, elist1, elen1);
-	int result1 = bhk_solver1->solve();
-	checkValue(1, 6, result1);
+	printf("Test 1:\n");
+	checkValue("BHK", 6, bhk_solver1->solve());
 	
 	// Test 2: graph with 3 nodes
 	bhk* bhk_solver2 = new bhk();
@@ -34,8 +32,8 @@ int main (int ac, char **av) {
 	int elist2[] = {0,1, 0,2, 1,2};
 	int elen2[] = {3, 4, 5};
 	bhk_solver2->init(ncount2, ecount2, elist2, elen2);
-	int result2 = bhk_solver2->solve();
-	checkValue(2, 12, result2);
+	printf("Test 2:\n");
+	checkValue("BHK", 12, bhk_solver2->solve());
 
 	// Test 3: graph with 4 nodes
 	bhk* bhk_solver3 = new bhk();
@@ -44,8 +42,8 @@ int main (int ac, char **av) {
 	int elist3[] = {0,1, 1,2, 2,3, 0,3, 0,2, 1,3};
 	int elen3[] = {1,1,1,1,2,2};
 	bhk_solver3->init(ncount3, ecount3, elist3, elen3);
-	int result3 = bhk_solver3->solve();
-	checkValue(3, 4, result3);
+	printf("Test 3:\n");
+	checkValue("BHK", 4, bhk_solver3->solve());
 
 	printf("Done.\n");
 	return 0;
