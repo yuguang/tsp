@@ -44,6 +44,16 @@ int main (int ac, char **av) {
 	bhk_solver3->init(ncount3, ecount3, elist3, elen3);
 	printf("Test 3:\n");
 	checkValue("BHK", 4, bhk_solver3->solve());
+	
+	// Test 4: graph with 6 nodes
+	bhk* bhk_solver4 = new bhk();
+	int ncount4 = 6;
+	int ecount4 = 15;
+	int elist4[] = {0,2, 2,5, 5,1, 1,3, 3,4, 4,0, 0,1, 0,3, 0,5, 1,2, 1,4, 2,3, 2,4, 3,5, 4,5};
+	int elen4[] = {2,3,5,4,7,6, 9,8,9,8,9,8,9,8,9};
+	bhk_solver4->init(ncount4, ecount4, elist4, elen4);
+	printf("Test 4:\n");
+	checkValue("BHK", 27, bhk_solver4->solve());
 
 	printf("Done.\n");
 	return 0;

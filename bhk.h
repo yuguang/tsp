@@ -13,14 +13,14 @@ class bhk {
 		int *elist; // list of edges
 		int *elen; // length of each edge
 
-		// returns the distance between two cities
-		int getDistance(int city1, int city2);
-
 		// stores the given distances from elen
 		std::map<std::pair<int,int>, int> distance;
 
+		// returns the distance between two cities
+		int getDistance(int city1, int city2);
+
 		// function to help generate subsets
-		std::vector<std::vector<int> > getSubsets(int size, int start, int end);
+		std::vector<std::vector<int> > getSubsets(int size, int end);
 		
 		// prints out a value in the dynamic programming table (for debugging)
 		void printDPval(std::vector<int> subset, int endcity, int value);
@@ -32,6 +32,7 @@ class bhk {
 
 		void init(int ncount, int ecount, int *elist, int *elen);
 
+		// returns the length of the shortest tour
 		int solve();
 
 		// TODO: do we need the actual solution or just the optimal length?

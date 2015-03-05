@@ -1,8 +1,6 @@
 #include "bhk.h"
 #include <limits>
 #include <cstdio>
-#include <cstdlib>
-#include <iostream>
 
 bhk::bhk() {
 
@@ -29,32 +27,42 @@ void bhk::init(int ncount, int ecount, int *elist, int *elen) {
 	this->elist = elist;
 	this->elen = elen;
 	for (int i = 0; i < ecount; i++) {
-		this->distance[std::make_pair(elist[2*i],elist[2*i+1])] = elen[i];
+		std::pair<int,int> key;
+		// we want the lower numbered city to be first:
+		if (elist[2*i] < elist[2*i+1]) {
+			key = std::make_pair(elist[2*i],elist[2*i+1]);
+		} else {
+			key = std::make_pair(elist[2*i+1],elist[2*i]);
+		}
+		this->distance[key] = elen[i];
 	}
 }
 
-std::vector<std::vector<int> > bhk::getSubsets(int size, int start, int end) {
+std::vector<std::vector<int> > bhk::getSubsets(int size, int end) {
+	// returns all subsets of {0,1, ..., end} with size elements
 	std::vector<std::vector<int> > rval;
 	if (size == 0) {
 		return rval;
 	}
-	if (size == (end - start + 1)) {
+	if (size == (end + 1)) {
+		// in this case we know all the cities must be included
 		std::vector<int> subset;
-		for (int i = start; i <= end; i++) {
+		subset.reserve(size);
+		for (int i = 0; i <= end; i++) {
 			subset.push_back(i);
 		}
 		rval.push_back(subset);
 		return rval;
 	}
-	std::vector<std::vector<int> > with_end = this->getSubsets(size - 1, start, end - 1);
-	std::vector<std::vector<int> > without_end = this->getSubsets(size, start, end - 1);
-	for (unsigned int i = 0; i < with_end.size(); i++) {
-		with_end[i].push_back(end);
+	std::vector<std::vector<int> > withEnd = this->getSubsets(size - 1, end - 1);
+	std::vector<std::vector<int> > withoutEnd = this->getSubsets(size, end - 1);
+	for (unsigned int i = 0; i < withEnd.size(); i++) {
+		withEnd[i].push_back(end);
 	}
 	// copied from http://stackoverflow.com/questions/3177241/best-way-to-concatenate-two-vectors
-	rval.reserve( with_end.size() + without_end.size() ); // preallocate memory
-	rval.insert( rval.end(), with_end.begin(), with_end.end() );
-	rval.insert( rval.end(), without_end.begin(), without_end.end() );
+	rval.reserve( withEnd.size() + withoutEnd.size() ); // preallocate memory
+	rval.insert( rval.end(), withEnd.begin(), withEnd.end() );
+	rval.insert( rval.end(), withoutEnd.begin(), withoutEnd.end() );
 	return rval;
 }
 
@@ -68,23 +76,24 @@ int bhk::solve() {
 		//this->printDPval(keyVector,i,this->getDistance(0,i));
 	}
 	for (int subset_size = 3; subset_size <= this->ncount; subset_size++) {
-		std::vector<std::vector<int> > subsets = this->getSubsets(subset_size, 0, this->ncount - 1);
+		std::vector<std::vector<int> > subsets = this->getSubsets(subset_size, this->ncount - 1);
 		for (unsigned int i = 0; i < subsets.size(); i++) {
 			for (int j = 1; j < subset_size; j++) {
-				int endCity = subsets[i][j];
+				// subsets[i][j] is the city we want to add to the path
 				std::vector<int> subset_minus_j = subsets[i];
 				subset_minus_j.erase(subset_minus_j.begin() + j);
 				int minVal = std::numeric_limits<int>::max();
 				for (int k = 1; k < subset_size; k++) {
+					// loop through possible second last cities
 					if (k != j) {
-						int test_val = DPmap[std::make_pair(subset_minus_j,subsets[i][k])] + this->getDistance(endCity,subsets[i][k]);
-						if (test_val < minVal) {
-							minVal = test_val;
+						int testVal = DPmap[std::make_pair(subset_minus_j,subsets[i][k])] + this->getDistance(subsets[i][j],subsets[i][k]);
+						if (testVal < minVal) {
+							minVal = testVal;
 						}
 					}
 				}
-				DPmap[std::make_pair(subsets[i],endCity)] = minVal;
-				//this->printDPval(subsets[i],endCity,minVal);
+				DPmap[std::make_pair(subsets[i],subsets[i][j])] = minVal;
+				//this->printDPval(subsets[i],subsets[i][j],minVal);
 			}
 		}
 	}
