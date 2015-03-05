@@ -39,16 +39,21 @@ void bhk::init(int ncount, int ecount, int *elist, int *elen) {
 }
 
 std::vector<std::vector<int> > bhk::getSubsets(int size, int end) {
-	// returns all subsets of {0,1, ..., end} with size elements
+	// returns all subsets of {1, ..., end} with size elements
 	std::vector<std::vector<int> > rval;
-	if (size == 0) {
+	if (size == 1) {
+		for (int i = 1; i <= end; i++) {
+			std::vector<int> v;
+			v.push_back(i);
+			rval.push_back(v);
+		}
 		return rval;
 	}
-	if (size == (end + 1)) {
+	if (size == end) {
 		// in this case we know all the cities must be included
 		std::vector<int> subset;
 		subset.reserve(size);
-		for (int i = 0; i <= end; i++) {
+		for (int i = 1; i <= end; i++) {
 			subset.push_back(i);
 		}
 		rval.push_back(subset);
@@ -68,22 +73,22 @@ std::vector<std::vector<int> > bhk::getSubsets(int size, int end) {
 
 int bhk::solve() {
 	std::map<std::pair<std::vector<int>,int>,int> DPmap; // stores dynamic programming results
+	// all subsets should include city 0, so to save space we don't bother adding it in
 	for (int i = 1; i < this->ncount; i++) {
 		std::vector<int> keyVector;
-		keyVector.push_back(0);
 		keyVector.push_back(i);
 		DPmap[std::make_pair(keyVector,i)] = this->getDistance(0,i);
 		//this->printDPval(keyVector,i,this->getDistance(0,i));
 	}
-	for (int subset_size = 3; subset_size <= this->ncount; subset_size++) {
+	for (int subset_size = 2; subset_size < this->ncount; subset_size++) {
 		std::vector<std::vector<int> > subsets = this->getSubsets(subset_size, this->ncount - 1);
 		for (unsigned int i = 0; i < subsets.size(); i++) {
-			for (int j = 1; j < subset_size; j++) {
+			for (int j = 0; j < subset_size; j++) {
 				// subsets[i][j] is the city we want to add to the path
 				std::vector<int> subset_minus_j = subsets[i];
 				subset_minus_j.erase(subset_minus_j.begin() + j);
 				int minVal = std::numeric_limits<int>::max();
-				for (int k = 1; k < subset_size; k++) {
+				for (int k = 0; k < subset_size; k++) {
 					// loop through possible second last cities
 					if (k != j) {
 						int testVal = DPmap[std::make_pair(subset_minus_j,subsets[i][k])] + this->getDistance(subsets[i][j],subsets[i][k]);
@@ -98,7 +103,7 @@ int bhk::solve() {
 		}
 	}
 	std::vector<int> allCities;
-	for (int i = 0; i < this->ncount; i++) {
+	for (int i = 1; i < this->ncount; i++) {
 		allCities.push_back(i);
 	}
 	int rVal = std::numeric_limits<int>::max();

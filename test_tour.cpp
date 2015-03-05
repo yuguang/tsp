@@ -5,9 +5,9 @@
 void checkValue(const char *method, int expectedValue, int testValue) {
 	printf("  %s: ", method);
 	if (testValue == expectedValue) {
-		printf("PASSED\n");
+		printf("\x1b[32mPASSED\x1b[0m\n");
 	} else {
-		printf("FAILED\n");
+		printf("\x1b[31mFAILED\x1b[0m\n");
 		printf("Expected value: %d. Test value: %d\n", expectedValue, testValue);
 	}
 }
