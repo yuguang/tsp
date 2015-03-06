@@ -381,8 +381,8 @@ CLEANUP:
 static int getrand (int ncount, int *p_ecount, int **p_elist,
     int **p_elen)
 {
-    int i, j, k, rval = 0;
-    double t1, t2;
+    int i, j, rval = 0;
+    int ecount = ncount * (ncount - 1)/2;
     int *elist = (int *) NULL, *elen = (int *) NULL;
     elist = (int *) malloc (2 * ecount * sizeof (int));
     if (!elist) {
@@ -396,14 +396,13 @@ static int getrand (int ncount, int *p_ecount, int **p_elist,
         rval = 1;
     }
 
-    int *datx = (int *) malloc (ncount * sizeof (int));
-    int *daty = (int *) malloc (ncount * sizeof (int));
+    double *datx = (double *) malloc (ncount * sizeof (double));
+    double *daty = (double *) malloc (ncount * sizeof (double));
     for (i = 0; i < ncount; i++) {
         datx[i] = rand() % BOUND;
         daty[i] = rand() % BOUND;
     }
     
-    int ecount = 0;
     for (i = 0; i < ncount; i++) {
         for (j = i+1; j < ncount; j++) {
             elist[2*ecount] = i;
