@@ -21,8 +21,6 @@
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
     int **p_elen);
-static int getrand (int ncount, int *ecount, int **p_elist,
-    int **p_elen);
 static int parseargs (int ac, char **av);
 static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int euclid_edgelen (int i, int j, double *x, double *y);
@@ -36,9 +34,9 @@ static int debug = 0;
 static int seed = 0;
 static int geometric_data = 0;
 static int method = 1;
-static int rand_inst = 1;
-static int rand_nodes = 0;
-static int rand_edges = 0;
+static int ncount_rand = 0;
+static int gridsize_rand = 100;
+static int use_all_subtours = 0;
 static int TVAL = 10000000;
 static int BOUND = 1001;
 
@@ -58,15 +56,25 @@ int main (int ac, char **av)
     if (debug)  printf ("Debugging turned on\n");
     if (geometric_data) printf ("Geomtric data\n");
 
-    if (rand_inst) {
-        ncount = rand_nodes;
-        getrand (ncount, &ecount, &elist, &elen);
-    } else {
-        rval = getprob (fname, &ncount, &ecount, &elist, &elen);
-        if (rval) {
-            fprintf (stderr, "getprob failed\n");
-            goto CLEANUP;
-        }
+    if (!fname && !ncount_rand) {
+        printf ("Must specify a problem file or use -k for random prob\n");
+        rval = 1; goto CLEANUP;
+    }
+    printf ("Seed = %d\n", seed);
+    srandom (seed);
+
+    if (fname) {
+        printf ("Problem name: %s\n", fname);
+        if (geometric_data) printf ("Geometric data\n");
+    }
+
+    rval = getprob (fname, &ncount, &ecount, &elist, &elen);
+    if (rval) {
+        fprintf (stderr, "getprob failed\n"); goto CLEANUP;
+    }
+
+    if (use_all_subtours && ncount > 20) {
+        fprintf (stderr, "Too many nodes to add all subtours\n"); goto CLEANUP;
     }
 
     tlist = (int *) malloc ((ncount)*sizeof (int));
@@ -425,12 +433,14 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     int *elist = (int *) NULL, *elen = (int *) NULL;
     double *x = (double *) NULL, *y = (double *) NULL;
 
-    if ((f = fopen (filename, "r")) == NULL) {
-	fprintf (stderr, "Unable to open %s for input\n",filename);
-        rval = 1;  goto CLEANUP;
+    if (filename) {
+        if ((f = fopen (filename, "r")) == NULL) {
+    	    fprintf (stderr, "Unable to open %s for input\n",filename);
+            rval = 1;  goto CLEANUP;
+        }
     }
 
-    if (geometric_data == 0) {
+    if (filename && geometric_data == 0) {
         if (fscanf (f, "%d %d", &ncount, &ecount) != 2) {
        	    fprintf (stderr, "Input file %s has invalid format\n",filename);
             rval = 1;  goto CLEANUP;
@@ -461,9 +471,13 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
 	    elen[i] = w;
         }
     } else {
-        if (fscanf (f, "%d", &ncount) != 1) {
-       	    fprintf (stderr, "Input file %s has invalid format\n",filename);
-            rval = 1;  goto CLEANUP;
+        if (filename) {
+            if (fscanf (f, "%d", &ncount) != 1) {
+       	        fprintf (stderr, "Input file %s has invalid format\n",filename);
+                rval = 1;  goto CLEANUP;
+            }
+        } else {
+            ncount = ncount_rand;
         }
 
         x = (double *) malloc (ncount * sizeof (double));
@@ -473,11 +487,25 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
             rval = 1; goto CLEANUP;
         }
 
-        for (i = 0; i < ncount; i++) {
-    	    if (fscanf(f,"%lf %lf",&x[i], &y[i]) != 2) {
-	        fprintf (stderr, "%s has invalid input format\n", filename);
-                rval = 1;  goto CLEANUP;
-			}
+        if (filename) {
+            for (i = 0; i < ncount; i++) {
+    	        if (fscanf(f,"%lf %lf",&x[i], &y[i]) != 2) {
+	            fprintf (stderr, "%s has invalid input format\n", filename);
+                    rval = 1;  goto CLEANUP;
+	        }
+            }
+        } else {
+            rval = CO759_build_xy (ncount, x, y, gridsize_rand);
+            if (rval) {
+                fprintf (stderr, "CO759_build_xy failed\n");
+                goto CLEANUP;
+            }
+    
+            printf ("%d\n", ncount);
+            for (i = 0; i < ncount; i++) {
+                printf ("%.0f %.0f\n", x[i], y[i]);
+            }
+            printf ("\n");
         }
 
         ecount = (ncount * (ncount - 1)) / 2;
@@ -528,23 +556,30 @@ static int parseargs (int ac, char **av)
 {
     int c;
 
-    while ((c = getopt (ac, av, "dgs:")) != EOF) {
+    if (ac == 1) {
+        usage (av[0]);
+        return 1;
+    }
+
+    while ((c = getopt (ac, av, "ab:gk:s:m:")) != EOF) {
         switch (c) {
-        case 'd':
-            debug = 1;
+        case 'a':
+            use_all_subtours = 1;
+            break;
+        case 'b':
+            gridsize_rand = atoi (optarg); 
             break;
         case 'g':
             geometric_data = 1;
             break;
+        case 'k':
+            ncount_rand = atoi (optarg);
+            break;
+        case 'm':
+            method = atoi (optarg);
+            break;
         case 's':
             seed = atoi (optarg);
-            break;
-        case 'r':
-            rand_inst = 1;
-            rand_nodes = atoi (optarg);
-            break;
-        case 'k':
-            method = atoi (optarg);
             break;
         case '?':
         default:
@@ -553,12 +588,11 @@ static int parseargs (int ac, char **av)
         }
     }
 
-    if (optind >= ac) {
+    if (optind < ac) fname = av[optind++];
+
+    if (optind != ac) {
         usage (av[0]);
         return 1;
-    }
-    if (!rand_inst) {
-        fname = av[optind++];
     }
 
     return 0;
@@ -566,12 +600,13 @@ static int parseargs (int ac, char **av)
 
 static void usage (char *f)
 {
-    fprintf (stderr, "Usage: %s prob_file\n", f);
-    fprintf (stderr, "   -d    turn on debugging\n");
+    fprintf (stderr, "Usage: %s [-see below-] [prob_file]\n", f);
+    fprintf (stderr, "   -a    add all subtours cuts at once\n");
+    fprintf (stderr, "   -b d  gridsize d for random problems\n");
     fprintf (stderr, "   -g    prob_file has x-y coordinates\n");
+    fprintf (stderr, "   -k d  generate problem with d cities\n");
     fprintf (stderr, "   -s d  random seed\n");
-    fprintf (stderr, "   -r n  generate random instances with n nodes\n");
-    fprintf (stderr, "   -k d  \n");
+    fprintf (stderr, "   -m d  \n");
     fprintf (stderr, "         1. enumeration \n");
     fprintf (stderr, "         2. Held-Karp spanning tree \n");
     fprintf (stderr, "         3. Bellman-Held-Karp dynamic programming \n");
