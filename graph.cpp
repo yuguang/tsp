@@ -1,15 +1,18 @@
 #include "graph.h"
+#include "edge.h"
 #include <map>
 #include <cstdio>
+#include <iostream>
 
 graph::graph() {
 	nodes = NULL;
 }
 
-void graph::init(double * x, int ncount, int ecount, int *elist) {
+void graph::init(double * x, int ncount, int ecount, int *elist, int *elen) {
   this->ncount = ncount;
   this->ecount = ecount;
   this->elist = elist;
+  this->elen = elen;
   this->nodes = new tnode[ncount];
   for (int i = 0; i < ncount; i++) {
     nodes[i].init(i);
@@ -19,6 +22,20 @@ void graph::init(double * x, int ncount, int ecount, int *elist) {
     if (x[i] > 0) {
       nodes[elist[2*i]].join(&(nodes[elist[2*i+1]]));
     }
+  }
+}
+
+void graph::init(int ncount, int ecount, int *elist, int *elen) {
+  this->ncount = ncount;
+  this->ecount = ecount;
+  this->elist = elist;
+  this->elen = elen;
+  this->nodes = new tnode[ncount];
+  for (int i = 0; i < ncount; i++) {
+    nodes[i].init(i);
+  }
+  for (int i = 0; i < ecount; i++) {
+      nodes[elist[2*i]].join(&(nodes[elist[2*i+1]]));
   }
 }
 
@@ -76,4 +93,48 @@ std::vector<int> graph::delta(std::vector<int> s) {
   }
   delete [] in_s;
   return d;
+}
+
+std::vector<int> graph::min_spanning_tree(std::vector<int> must_include) {
+  tnode *nodes = new tnode[ncount];
+  std::vector<edge> edges;
+  std::vector<int> mst;
+
+  for( int i = 0; i < ncount; i++ ) nodes[i].init(i);
+
+  edges.reserve(ecount);
+  for( int i = 0; i < ecount; i++ ) {
+    edges.push_back(edge(elist[2*i], elist[2*i+1], elen[i], i));
+  }
+
+  std::sort(edges.begin(), edges.end());
+  mst.reserve(ncount-1);
+
+  for( int i = 0; i < must_include.size(); i++ ) {
+    if( nodes[elist[2*must_include[i]]].find_label() != nodes[elist[2*must_include[i]+1]].find_label() ) {
+      mst.push_back(must_include[i]);
+      nodes[elist[2*must_include[i]]].join(&nodes[elist[2*must_include[i]+1]]);
+      // std::cout << "including " << must_include[i] << std::endl;
+    } else {
+      // std::cout << "FAAAAAIIIIIL" << std::endl;
+    }
+  }
+  
+  for( int i = 0; i < ecount; i++ ) {
+    if( nodes[edges[i].end1].find_label() != nodes[edges[i].end2].find_label() ) {
+      for( int j = 0; j < must_include.size(); j++ ) {
+        if( i == must_include[j] ) {
+          continue;
+        }
+      }
+      mst.push_back(edges[i].ind);
+      nodes[edges[i].end1].join(&(nodes[edges[i].end2]));
+    } 
+    if( mst.size() == ncount-1 ) {
+      break;
+    }
+  }
+
+  delete [] nodes;
+  return mst;
 }

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "tnode.h"
+#include <algorithm>
 
 class graph {
 	private:
@@ -10,11 +11,13 @@ class graph {
                 int ncount;
                 int ecount;
                 int *elist;
+                int *elen;
 
 	public:
 		graph();
 
-		void init(double *x, int ncount, int ecount, int *elist);
+		void init(double *x, int ncount, int ecount, int *elist, int *elen);
+                void init(int ncount, int ecount, int *elist, int *elen);
 
 		~graph();
 
@@ -25,6 +28,8 @@ class graph {
                 // returns a list of the indices of edges in delta(s)
                 std::vector<int> delta(std::vector<int> s);
 
+                // Computes the MST for the graph
+                std::vector<int> min_spanning_tree(std::vector<int> must_include);
 };
 
 #endif

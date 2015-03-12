@@ -15,6 +15,7 @@
 #include <iostream>
 #include <vector>
 #include "graph.h"
+#include "onetree.h"
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
@@ -64,6 +65,9 @@ int main (int ac, char **av)
     szeit = CO759_zeit ();
     TVAL = nntour(ncount,ecount,elist,elen,tlist);
     printf ("Nearest neighbor tour: %d\n", TVAL);
+
+    std::cout << "one_tree_tsp: " << one_tree_tsp(ncount, ecount, elist, elen, TVAL) << std::endl;
+
     rval = subtour (ncount, ecount, elist, elen, tlist);
     if (rval) {
         fprintf (stderr, "subtour failed\n");
@@ -192,22 +196,52 @@ CLEANUP:
 int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
 {
     int start = 0;
-    int *marks = new int[ecount];
+    int *marks = new int[ncount];
     int i, j, best, bestend = 0, end = start, len = 0;
+    int best_len = TVAL;
 
-    for (i = 0; i < ncount; i++) marks[i] = 0;
-    for (i = 1; i < ncount; i++) {
-        marks[end] = 1;
-        best = TVAL;
-        for (j = 0; j < ncount; j++) {
-            if (marks[j] == 0 && elen[j] < best) {
-                best = elen[j]; bestend = j;
+    for (start = 0; start < ncount; start ++ ) {
+        end = start;
+        len = 0;
+        for (i = 0; i < ncount; i++) marks[i] = 0;
+        for (i = 1; i < ncount; i++) {
+            marks[end] = 1;
+            best = TVAL;
+            for (j = 0; j < ecount; j++) {
+                if( elist[2*j] == end ) {
+                    if (marks[elist[2*j+1]] == 0 && elen[j] < best) {
+                        best = elen[j]; bestend = elist[2*j+1];
+                    } 
+                }
+                if( elist[2*j+1] == end ) {
+                    if (marks[elist[2*j]] == 0 && elen[j] < best) {
+                        best = elen[j]; bestend = elist[2*j];
+                    } 
+                }
+                // if (marks[j] == 0 && elen[j] < best) {
+                //     best = elen[j]; bestend = elist[2*j+1];
+                // }
+            }
+            len += best; end = bestend;
+        }
+
+        int len_before_ret = len;
+        for(i = 0; i < ecount; i++ ) {
+            if( (elist[2*i] == start && elist[2*i+1] == end) || (elist[2*i+1] == start && elist[2*i] == end) ) {
+                len += elen[i];
+                break;
             }
         }
-        len += best; end = bestend;
+        if( len == len_before_ret ) { // Couldn't find returning edge on sparse graph
+            len *= 2;
+        }
+        if( len  < best_len ) {
+            best_len = len;
+        }
     }
+
 	delete [] marks;
-    return len;
+    return best_len;
 }
 
 static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
@@ -315,7 +349,7 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 		goto CLEANUP;
 	}
 	
-	support.init(x, ncount, ecount, elist);
+	support.init(x, ncount, ecount, elist, elen);
 	
 	while( !support.is_connected() ) {
 		std::vector<std::vector<int> > components = support.get_components();
@@ -352,7 +386,7 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 		
 		support.graph::~graph();
 		support = graph();
-		support.init(x, ncount, ecount, elist);
+		support.init(x, ncount, ecount, elist, elen);
 	}
 
 	//CO759lp_write(lp,"deltas.lp");
