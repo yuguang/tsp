@@ -1,4 +1,4 @@
-SUBTOUROBJS= tour.o lp.o util.o graph.o tnode.o bhk.o bhk2.o
+SUBTOUROBJS= tour.o lp.o util.o graph.o tnode.o bhk.o bhk2.o onetree.o edge.o 
 CPLEX_LIB = /software/cplex/distribution/cplex/lib/x86-64_linux/static_pic/libcplex.a
 CPLEX_INCLUDE = /software/cplex/distribution/cplex/include/ilcplex
 
@@ -18,13 +18,14 @@ test_graph: test_graph.o graph.o tnode.o
 clean:
 	rm -f *.o tour test_graph test_tour
 
-tour.o: tour.cpp util.h graph.h
+tour.o: tour.cpp util.h graph.h onetree.h
 lp.o: lp.c lp.h
 util.o: util.c util.h
-graph.o: graph.cpp graph.h tnode.h
+edge.o: edge.cpp edge.h
+graph.o: graph.cpp graph.h tnode.h edge.h
 tnode.o: tnode.cpp tnode.h
 test_graph.o: test_graph.cpp graph.h tnode.h
 bhk.o: bhk.cpp bhk.h
 bhk2.o: bhk2.cpp bhk2.h
 test_tour.o: test_tour.cpp bhk.h bhk2.h
-
+onetree.o: onetree.cpp onetree.h
