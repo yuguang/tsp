@@ -17,6 +17,7 @@
 #include <vector>
 #include "graph.h"
 #include "bhk.h"
+#include "onetree.h"
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
@@ -87,6 +88,11 @@ int main (int ac, char **av)
             bestlen = nntour(ncount,ecount,elist,elen,tlist);
             printf ("Nearest neighbor tour: %d\n", bestlen);
             enumeration(ncount,ecount,elist,elen,tlist,distmatrix);
+            break;
+        case 2:
+            bestlen = nntour(ncount,ecount,elist,elen,tlist);
+            printf ("Nearest neighbor tour: %d\n", bestlen);
+            printf( "One Tree tour: %d\n", one_tree_tsp(ncount,ecount,elist,elen,bestlen));
             break;
         case 4:
             bestlen = nntour(ncount,ecount,elist,elen,tlist);
@@ -373,7 +379,7 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 		goto CLEANUP;
 	}
 	
-	support.init(x, ncount, ecount, elist);
+	support.init(x, ncount, ecount, elist, elen);
 	
 	while( !support.is_connected() ) {
 		std::vector<std::vector<int> > components = support.get_components();
@@ -410,7 +416,7 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 		
 		support.graph::~graph();
 		support = graph();
-		support.init(x, ncount, ecount, elist);
+		support.init(x, ncount, ecount, elist, elen);
 	}
 
 	//CO759lp_write(lp,"deltas.lp");
@@ -624,7 +630,7 @@ static void usage (char *f)
     fprintf (stderr, "   -s d  random seed\n");
     fprintf (stderr, "   -m d  \n");
     fprintf (stderr, "         1. enumeration \n");
-    fprintf (stderr, "         2. Held-Karp spanning tree \n");
+    fprintf (stderr, "         2. Held-Karp one tree \n");
     fprintf (stderr, "         3. Bellman-Held-Karp dynamic programming \n");
     fprintf (stderr, "         4. Branch and bound linear programming \n");
 }

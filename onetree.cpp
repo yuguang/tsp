@@ -24,11 +24,9 @@ branch_node::branch_node(std::set<int> X, std::set<int> Y, int ncount, int *pi, 
 }
 
 branch_node::~branch_node() {
-	std::cout << "going to delete pi" << std::endl;
 	if( pi ) {
-		delete [] pi; pi = 0;
+		// delete [] pi; pi = 0; // Not sure why this causes crashes !?
 	}
-	std::cout << "deleted pi" << std::endl;
 }
 
 bool operator<(const branch_node & l, const branch_node & r) {
@@ -84,7 +82,7 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 		bound = w(ncount, ecount, elist, elen, X, Y, pi, false, &deg_not_2);
 		if( deg_not_2.size() == 0 ) {
 			// std::cout << "FOUND TOUR 1" << std::endl;
-			std::cout << "branches: " << branches << std::endl;
+			// std::cout << "branches: " << branches << std::endl;
 			delete [] pi; pi = 0;
 			delete [] pi_prime; pi_prime = 0;
 			return bound;
@@ -144,7 +142,7 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 
 	}
 
-	std::cout << "branches: " << branches << std::endl;
+	// std::cout << "branches: " << branches << std::endl;
 	delete [] pi; pi = 0;
 	delete [] pi_prime; pi_prime = 0;
 	return upper_bound;
