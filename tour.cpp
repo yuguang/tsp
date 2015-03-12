@@ -16,17 +16,18 @@
 #include <iostream>
 #include <vector>
 #include "graph.h"
+#include "bhk.h"
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
-    int **p_elen);
-static int getrand (int ncount, int *ecount, int **p_elist,
-    int **p_elen);
+    int **p_elen, int ***distmatrix);
 static int parseargs (int ac, char **av);
 static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int euclid_edgelen (int i, int j, double *x, double *y);
 
 static int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist);
+static int enumeration(int ncount, int ecount, int *elist, int *elen, int *tlist, int **distmatrix);
+static void permute(int ncount, int *tour, int k, int tourlen, int **dist);
 static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
 static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist);
 
@@ -35,16 +36,16 @@ static int debug = 0;
 static int seed = 0;
 static int geometric_data = 0;
 static int method = 1;
-static int rand_inst = 1;
-static int rand_nodes = 0;
-static int rand_edges = 0;
-static int TVAL = 10000000;
+static int ncount_rand = 0;
+static int gridsize_rand = 100;
+static int bestlen = 10000000;
 static int BOUND = 1001;
 
 int main (int ac, char **av)
 {
     int rval  = 0, ncount = 0, ecount = 0;
     int *elist = (int *) NULL, *elen = (int *) NULL, *tlist = (int *) NULL;
+    int **distmatrix = (int **) NULL;
     double szeit;
 
     seed = (int) CO759_real_zeit ();
@@ -55,17 +56,23 @@ int main (int ac, char **av)
     printf ("Problem name: %s\n", fname);
     printf ("Seed = %d\n", seed);
     if (debug)  printf ("Debugging turned on\n");
-    if (geometric_data) printf ("Geomtric data\n");
+    if (geometric_data) printf ("Geometric data\n");
 
-    if (rand_inst) {
-        ncount = rand_nodes;
-        getrand (ncount, &ecount, &elist, &elen);
-    } else {
-        rval = getprob (fname, &ncount, &ecount, &elist, &elen);
-        if (rval) {
-            fprintf (stderr, "getprob failed\n");
-            goto CLEANUP;
-        }
+    if (!fname && !ncount_rand) {
+        printf ("Must specify a problem file or use -k for random prob\n");
+        rval = 1; goto CLEANUP;
+    }
+    printf ("Seed = %d\n", seed);
+    srandom (seed);
+
+    if (fname) {
+        printf ("Problem name: %s\n", fname);
+        if (geometric_data) printf ("Geometric data\n");
+    }
+
+    rval = getprob (fname, &ncount, &ecount, &elist, &elen, &distmatrix);
+    if (rval) {
+        fprintf (stderr, "getprob failed\n"); goto CLEANUP;
     }
 
     tlist = (int *) malloc ((ncount)*sizeof (int));
@@ -75,12 +82,22 @@ int main (int ac, char **av)
     }
 
     szeit = CO759_zeit ();
-    TVAL = nntour(ncount,ecount,elist,elen,tlist);
-    printf ("Nearest neighbor tour: %d\n", TVAL);
-    rval = subtour (ncount, ecount, elist, elen, tlist);
-    if (rval) {
-        fprintf (stderr, "subtour failed\n");
-        goto CLEANUP;
+    switch (method) {
+        case 1:
+            bestlen = nntour(ncount,ecount,elist,elen,tlist);
+            printf ("Nearest neighbor tour: %d\n", bestlen);
+            enumeration(ncount,ecount,elist,elen,tlist,distmatrix);
+            break;
+        case 4:
+            bestlen = nntour(ncount,ecount,elist,elen,tlist);
+            printf ("Nearest neighbor tour: %d\n", bestlen);
+            rval = subtour (ncount, ecount, elist, elen, tlist);
+            if (rval) {
+                fprintf (stderr, "subtour failed\n");
+                goto CLEANUP;
+            }
+        default:
+            break;
     }
     printf ("Running Time: %.2f seconds\n", CO759_zeit() - szeit);
     fflush (stdout);
@@ -101,7 +118,7 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
     int bbcount = 0;
     double  obj[1], lb[1], ub[1], objval, *x = (double *) NULL;
     int     cmatbeg[1], cmatind[2];
-    double  cmatval[2];
+    double  cmabestlen[2];
     CO759lp lp;
 
     rval = CO759lp_init (&lp);
@@ -122,8 +139,8 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
     /* Build a column for each edge of the graph */
 
     cmatbeg[0] = 0;
-    cmatval[0] = 1.0;
-    cmatval[1] = 1.0;
+    cmabestlen[0] = 1.0;
+    cmabestlen[1] = 1.0;
     for (j = 0; j < ecount; j++) {
         obj[0]     = (double) elen[j];
         lb[0]      = 0.0;
@@ -131,7 +148,7 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
         cmatind[0] = elist[2*j];
         cmatind[1] = elist[2*j+1];
         rval = CO759lp_addcols (&lp, 1 /* # of new variables */,
-           2 /* # of new nonzeros */, obj, cmatbeg, cmatind, cmatval, lb, ub);
+           2 /* # of new nonzeros */, obj, cmatbeg, cmatind, cmabestlen, lb, ub);
         if (rval) {
             fprintf (stderr, "CClp_addcols failed\n"); goto CLEANUP;
         }
@@ -186,7 +203,7 @@ static int subtour (int ncount, int ecount, int *elist, int *elen, int *tlist)
 	
     solve(0, &bbcount, &lp,ncount,ecount,elist,elen,tlist);
 
-	std::cout << "Optimal Tour " << TVAL << std::endl;
+	std::cout << "Optimal Tour " << bestlen << std::endl;
 
     printf ("Total Number of Search Nodes: %d\n", bbcount);
     fflush (stdout);
@@ -201,6 +218,34 @@ CLEANUP:
 // elist[2*i+1] is end1 of ith edge
 // elen - array ecount
 // elen[i] is length of ith edge
+int enumeration(int ncount, int ecount, int *elist, int *elen, int *tlist, int **distmatrix)
+{
+    int *tour = new int[ncount];
+    for (int i = 0; i < ncount; i++) tour[i] = i;
+    permute(ncount,tour,ncount-1,0,distmatrix);
+    return 1;
+}
+
+#define  swap(i, j)  temp = tour[i]; tour[i] = tour[j]; tour[j] = temp;
+
+void permute(int ncount, int *tour, int k, int tourlen, int **dist)
+{
+    int i, temp;
+    if (tourlen >= bestlen) return;
+
+    if (k == 1) {
+        tourlen += (dist[tour[0]][tour[1]] + dist[tour[ncount-1]][tour[0]]);
+        if (tourlen < bestlen) {
+            bestlen = tourlen;
+        }
+    } else {
+        for (i = 0; i < k; i++) {
+            swap(i,k-1);
+            permute(ncount, tour, k-1, tourlen+dist[tour[k-1]][tour[k]], dist);
+            swap(i,k-1);
+        }
+    }
+}
 
 int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
 {
@@ -211,7 +256,7 @@ int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
     for (i = 0; i < ncount; i++) marks[i] = 0;
     for (i = 1; i < ncount; i++) {
         marks[end] = 1;
-        best = TVAL;
+        best = bestlen;
         for (j = 0; j < ncount; j++) {
             if (marks[j] == 0 && elen[j] < best) {
                 best = elen[j]; bestend = j;
@@ -246,10 +291,10 @@ static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, 
         fprintf (stderr, "CO759lp_objval failed 3\n"); goto CLEANUP;
     }
 
-    printf ("Depth %d, BBcount: %d,  Bound: %.3f, TVAL: %d\n", depth, *bbcount, bound, TVAL);
+    printf ("Depth %d, BBcount: %d,  Bound: %.3f, bestlen: %d\n", depth, *bbcount, bound, bestlen);
     fflush (stdout);
 	
-	if( bound >= TVAL ) {
+	if( bound >= bestlen ) {
 		rval = 0;
 		goto CLEANUP;
 	} else {
@@ -274,8 +319,8 @@ static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, 
 
 		if( frac == -1 ) {
 			//std::cout << "No fractional edge " << std::endl;
-			//std::cout << "Setting TVAL to: " << bound << std::endl;
-			TVAL = bound;
+			//std::cout << "Setting bestlen to: " << bound << std::endl;
+			bestlen = bound;
 			rval = 0;
 			goto CLEANUP;
 		} 
@@ -313,7 +358,7 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 	double rhs[1] = {2.0};
 	char sense[1] = {'G'};
 	int newnz, *rmatbeg = NULL, *rmatind = NULL;
-	double *rmatval = NULL;
+	double *rmabestlen = NULL;
 	graph support;
 	
 	x = new double[ecount];	
@@ -337,17 +382,17 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 			newnz = support.delta(components[i]).size();
 			rmatbeg = new int[newnz];
 			rmatind = new int[newnz];
-			rmatval = new double[newnz];
+			rmabestlen = new double[newnz];
 			for(int j = 0; j < newnz; j++ ) {
 				rmatbeg[j] = 0;
 				rmatind[j] = support.delta(components[i])[j];
-				rmatval[j] = 1.0;
+				rmabestlen[j] = 1.0;
 			}
-			rval = CO759lp_addrows (lp, 1, newnz, rhs, sense, rmatbeg, rmatind, rmatval);
+			rval = CO759lp_addrows (lp, 1, newnz, rhs, sense, rmatbeg, rmatind, rmabestlen);
 			if( rval ) { std::cerr << "CO759lp_create failed" << std::endl; goto CLEANUP; }
 			delete [] rmatbeg; rmatbeg = NULL;
 			delete [] rmatind; rmatind = NULL;
-			delete [] rmatval; rmatval = NULL;
+			delete [] rmabestlen; rmabestlen = NULL;
 		}
 		
 		rval = CO759lp_opt (lp, &infeasible);
@@ -372,65 +417,28 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 CLEANUP:	
 	if( rmatbeg ) delete [] rmatbeg;
 	if( rmatind ) delete [] rmatind;
-	if( rmatval ) delete [] rmatval;
+	if( rmabestlen ) delete [] rmabestlen;
 	if( x ) delete [] x;
 	return rval;
 }
 
-static int getrand (int ncount, int *p_ecount, int **p_elist,
-    int **p_elen)
-{
-    int i, j, k, rval = 0;
-    double t1, t2;
-    int *elist = (int *) NULL, *elen = (int *) NULL;
-    elist = (int *) malloc (2 * ecount * sizeof (int));
-    if (!elist) {
-        fprintf (stderr, "out of memory for elist\n");
-        rval = 1;
-    }
-
-    elen = (int *) malloc (ecount * sizeof (int));
-    if (!elen) {
-        fprintf (stderr, "out of memory for elen\n");
-        rval = 1;
-    }
-
-    int *datx = (int *) malloc (ncount * sizeof (int));
-    int *daty = (int *) malloc (ncount * sizeof (int));
-    for (i = 0; i < ncount; i++) {
-        datx[i] = rand() % BOUND;
-        daty[i] = rand() % BOUND;
-    }
-    
-    int ecount = 0;
-    for (i = 0; i < ncount; i++) {
-        for (j = i+1; j < ncount; j++) {
-            elist[2*ecount] = i;
-            elist[2*ecount+1] = j;
-            elen[ecount] = euclid_edgelen (i, j, datx, daty);
-            ecount++;
-        }
-    }
-    *p_ecount = ecount;
-    *p_elist = elist;
-    *p_elen = elen;
-    return rval;
-}
-
 static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
-    int **p_elen)
+    int **p_elen, int ***p_distmatrix)
 {
     FILE *f = (FILE *) NULL;
     int i, j, end1, end2, w, rval = 0, ncount, ecount;
     int *elist = (int *) NULL, *elen = (int *) NULL;
     double *x = (double *) NULL, *y = (double *) NULL;
+    int **distmatrix = (int **) NULL;
 
-    if ((f = fopen (filename, "r")) == NULL) {
-	fprintf (stderr, "Unable to open %s for input\n",filename);
-        rval = 1;  goto CLEANUP;
+    if (filename) {
+        if ((f = fopen (filename, "r")) == NULL) {
+    	    fprintf (stderr, "Unable to open %s for input\n",filename);
+            rval = 1;  goto CLEANUP;
+        }
     }
 
-    if (geometric_data == 0) {
+    if (filename && geometric_data == 0) {
         if (fscanf (f, "%d %d", &ncount, &ecount) != 2) {
        	    fprintf (stderr, "Input file %s has invalid format\n",filename);
             rval = 1;  goto CLEANUP;
@@ -450,6 +458,14 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
             fprintf (stderr, "out of memory for elen\n");
             rval = 1;  goto CLEANUP;
         }
+        
+        distmatrix = new int* [ncount];
+        for (i = 0; i < ncount; i++) {
+            distmatrix[i] = new int[ncount];
+            for (j = 0; j < ncount; j++) {
+                distmatrix[i][j] = 0;
+            }
+        }
 
         for (i = 0; i < ecount; i++) {
     	    if (fscanf(f,"%d %d %d",&end1, &end2, &w) != 3) {
@@ -459,11 +475,17 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
 	    elist[2*i] = end1;
 	    elist[2*i+1] = end2;
 	    elen[i] = w;
+            distmatrix[end1][end2] = w;
+            distmatrix[end2][end1] = w;
         }
     } else {
-        if (fscanf (f, "%d", &ncount) != 1) {
-       	    fprintf (stderr, "Input file %s has invalid format\n",filename);
-            rval = 1;  goto CLEANUP;
+        if (filename) {
+            if (fscanf (f, "%d", &ncount) != 1) {
+       	        fprintf (stderr, "Input file %s has invalid format\n",filename);
+                rval = 1;  goto CLEANUP;
+            }
+        } else {
+            ncount = ncount_rand;
         }
 
         x = (double *) malloc (ncount * sizeof (double));
@@ -473,11 +495,25 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
             rval = 1; goto CLEANUP;
         }
 
-        for (i = 0; i < ncount; i++) {
-    	    if (fscanf(f,"%lf %lf",&x[i], &y[i]) != 2) {
-	        fprintf (stderr, "%s has invalid input format\n", filename);
-                rval = 1;  goto CLEANUP;
-			}
+        if (filename) {
+            for (i = 0; i < ncount; i++) {
+    	        if (fscanf(f,"%lf %lf",&x[i], &y[i]) != 2) {
+	            fprintf (stderr, "%s has invalid input format\n", filename);
+                    rval = 1;  goto CLEANUP;
+	        }
+            }
+        } else {
+            rval = CO759_build_xy (ncount, x, y, gridsize_rand);
+            if (rval) {
+                fprintf (stderr, "CO759_build_xy failed\n");
+                goto CLEANUP;
+            }
+    
+            printf ("%d\n", ncount);
+            for (i = 0; i < ncount; i++) {
+                printf ("%.0f %.0f\n", x[i], y[i]);
+            }
+            printf ("\n");
         }
 
         ecount = (ncount * (ncount - 1)) / 2;
@@ -495,13 +531,24 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
             rval = 1;  goto CLEANUP;
         }
 
+        distmatrix = new int* [ncount];
+        for (i = 0; i < ncount; i++) {
+            distmatrix[i] = new int[ncount];
+            for (j = 0; j < ncount; j++) {
+                distmatrix[i][j] = 0;
+            }
+        }
+        
         ecount = 0;
         for (i = 0; i < ncount; i++) {
             for (j = i+1; j < ncount; j++) {
                 elist[2*ecount] = i;
                 elist[2*ecount+1] = j;
-                elen[ecount] = euclid_edgelen (i, j, x, y);
+                w = euclid_edgelen (i, j, x, y);
+                elen[ecount] = w;
                 ecount++;
+                distmatrix[i][j] = w;
+                distmatrix[j][i] = w;
             }
         }
     }
@@ -510,6 +557,7 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
     *p_ecount = ecount;
     *p_elist = elist;
     *p_elen = elen;
+    *p_distmatrix = distmatrix;
 
 CLEANUP:
     if (f) fclose (f);
@@ -528,23 +576,27 @@ static int parseargs (int ac, char **av)
 {
     int c;
 
-    while ((c = getopt (ac, av, "dgs:")) != EOF) {
+    if (ac == 1) {
+        usage (av[0]);
+        return 1;
+    }
+
+    while ((c = getopt (ac, av, "b:gk:s:m:")) != EOF) {
         switch (c) {
-        case 'd':
-            debug = 1;
+        case 'b':
+            gridsize_rand = atoi (optarg); 
             break;
         case 'g':
             geometric_data = 1;
             break;
+        case 'k':
+            ncount_rand = atoi (optarg);
+            break;
+        case 'm':
+            method = atoi (optarg);
+            break;
         case 's':
             seed = atoi (optarg);
-            break;
-        case 'r':
-            rand_inst = 1;
-            rand_nodes = atoi (optarg);
-            break;
-        case 'k':
-            method = atoi (optarg);
             break;
         case '?':
         default:
@@ -553,12 +605,11 @@ static int parseargs (int ac, char **av)
         }
     }
 
-    if (optind >= ac) {
+    if (optind < ac) fname = av[optind++];
+
+    if (optind != ac) {
         usage (av[0]);
         return 1;
-    }
-    if (!rand_inst) {
-        fname = av[optind++];
     }
 
     return 0;
@@ -566,12 +617,12 @@ static int parseargs (int ac, char **av)
 
 static void usage (char *f)
 {
-    fprintf (stderr, "Usage: %s prob_file\n", f);
-    fprintf (stderr, "   -d    turn on debugging\n");
+    fprintf (stderr, "Usage: %s [-see below-] [prob_file]\n", f);
+    fprintf (stderr, "   -b d  gridsize d for random problems\n");
     fprintf (stderr, "   -g    prob_file has x-y coordinates\n");
+    fprintf (stderr, "   -k d  generate problem with d cities\n");
     fprintf (stderr, "   -s d  random seed\n");
-    fprintf (stderr, "   -r n  generate random instances with n nodes\n");
-    fprintf (stderr, "   -k d  \n");
+    fprintf (stderr, "   -m d  \n");
     fprintf (stderr, "         1. enumeration \n");
     fprintf (stderr, "         2. Held-Karp spanning tree \n");
     fprintf (stderr, "         3. Bellman-Held-Karp dynamic programming \n");
