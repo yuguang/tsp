@@ -17,6 +17,7 @@
 #include <vector>
 #include "graph.h"
 #include "bhk.h"
+#include "bhk2.h"
 #include "onetree.h"
 
 static void usage (char *f);
@@ -94,6 +95,12 @@ int main (int ac, char **av)
             printf ("Nearest neighbor tour: %d\n", bestlen);
             printf( "One Tree tour: %d\n", one_tree_tsp(ncount,ecount,elist,elen,bestlen));
             break;
+        case 3: {
+                bhk* bhk_solver = new bhk();
+                bhk_solver->init(ncount,ecount,elist,elen);
+                printf("Bellman-Held-Karp 1: %d\n", bhk_solver->solve());
+        	}
+        	break;
         case 4:
             bestlen = nntour(ncount,ecount,elist,elen,tlist);
             printf ("Nearest neighbor tour: %d\n", bestlen);
@@ -102,6 +109,13 @@ int main (int ac, char **av)
                 fprintf (stderr, "subtour failed\n");
                 goto CLEANUP;
             }
+            break;
+        case 5: {
+                bhk2* bhk2_solver = new bhk2();
+                bhk2_solver->init(ncount,ecount,elist,elen);
+                printf("Bellman-Held-Karp 2: %d\n", bhk2_solver->solve());
+            }
+            break;
         default:
             break;
     }
@@ -633,5 +647,6 @@ static void usage (char *f)
     fprintf (stderr, "         2. Held-Karp one tree \n");
     fprintf (stderr, "         3. Bellman-Held-Karp dynamic programming \n");
     fprintf (stderr, "         4. Branch and bound linear programming \n");
+    fprintf (stderr, "         5. Bellman-Held-Karp implementation 2 \n");
 }
 
