@@ -103,7 +103,7 @@ int main (int ac, char **av)
             break;
         case 3: {
                 bhk* bhk_solver = new bhk();
-                bhk_solver->init(ncount,ecount,elist,elen);
+                bhk_solver->init(ncount,distmatrix);
                 printf("Bellman-Held-Karp 1: %d\n", bhk_solver->solve());
         	}
         	break;
@@ -118,7 +118,7 @@ int main (int ac, char **av)
             break;
         case 5: {
                 bhk2* bhk2_solver = new bhk2();
-                bhk2_solver->init(ncount,ecount,elist,elen);
+                bhk2_solver->init(ncount,distmatrix);
                 printf("Bellman-Held-Karp 2: %d\n", bhk2_solver->solve());
             }
             break;
@@ -495,12 +495,12 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
 
         for (i = 0; i < ecount; i++) {
     	    if (fscanf(f,"%d %d %d",&end1, &end2, &w) != 3) {
-	        fprintf (stderr, "%s has invalid input format\n", filename);
+	            fprintf (stderr, "%s has invalid input format\n", filename);
                 rval = 1;  goto CLEANUP;
-	    }
-	    elist[2*i] = end1;
-	    elist[2*i+1] = end2;
-	    elen[i] = w;
+	        }
+	        elist[2*i] = end1;
+	        elist[2*i+1] = end2;
+	        elen[i] = w;
             distmatrix[end1][end2] = w;
             distmatrix[end2][end1] = w;
         }

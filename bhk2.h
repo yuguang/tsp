@@ -9,15 +9,7 @@ class bhk2 {
 
 	private:
 		int ncount; // number of nodes
-		int ecount; // number of edges
-		int *elist; // list of edges
-		int *elen; // length of each edge
-
-		// stores the given distances from elen
-		std::map<std::pair<int,int>, int> distance;
-
-		// returns the distance between two cities
-		int getDistance(int city1, int city2);
+		int **dmatrix; // distances between edges
 		
 		typedef unsigned int Set;
 		int** opt;
@@ -28,7 +20,7 @@ class bhk2 {
 		bhk2();
 		~bhk2();
 
-		void init(int ncount, int ecount, int *elist, int *elen);
+		void init(int ncount, int **dmatrix);
 
 		// returns the length of the shortest tour
 		int solve();

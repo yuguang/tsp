@@ -10,32 +10,9 @@ bhk::~bhk() {
 	
 }
 
-int bhk::getDistance(int city1, int city2) {
-	if (city2 < city1) {
-		return this->getDistance(city2, city1);
-	}
-	std::pair<int,int> key = std::make_pair(city1,city2);
-	if (this->distance.count(key) > 0) {
-		return this->distance[std::make_pair(city1,city2)];
-	}
-	return std::numeric_limits<int>::max(); // if there is no edge, we return INT_MAX
-}
-
-void bhk::init(int ncount, int ecount, int *elist, int *elen) {
+void bhk::init(int ncount, int **dmatrix) {
 	this->ncount = ncount;
-	this->ecount = ecount;
-	this->elist = elist;
-	this->elen = elen;
-	for (int i = 0; i < ecount; i++) {
-		std::pair<int,int> key;
-		// we want the lower numbered city to be first:
-		if (elist[2*i] < elist[2*i+1]) {
-			key = std::make_pair(elist[2*i],elist[2*i+1]);
-		} else {
-			key = std::make_pair(elist[2*i+1],elist[2*i]);
-		}
-		this->distance[key] = elen[i];
-	}
+	this->dmatrix = dmatrix;
 }
 
 std::vector<std::vector<int> > bhk::getSubsets(int size, int end) {
@@ -77,7 +54,7 @@ int bhk::solve() {
 	for (int i = 1; i < this->ncount; i++) {
 		std::vector<int> keyVector;
 		keyVector.push_back(i);
-		DPmap[std::make_pair(keyVector,i)] = this->getDistance(0,i);
+		DPmap[std::make_pair(keyVector,i)] = this->dmatrix[0][i];
 		//this->printDPval(keyVector,i,this->getDistance(0,i));
 	}
 	for (int subset_size = 2; subset_size < this->ncount; subset_size++) {
@@ -91,7 +68,7 @@ int bhk::solve() {
 				for (int k = 0; k < subset_size; k++) {
 					// loop through possible second last cities
 					if (k != j) {
-						int testVal = DPmap[std::make_pair(subset_minus_j,subsets[i][k])] + this->getDistance(subsets[i][j],subsets[i][k]);
+						int testVal = DPmap[std::make_pair(subset_minus_j,subsets[i][k])] + this->dmatrix[subsets[i][j]][subsets[i][k]];
 						if (testVal < minVal) {
 							minVal = testVal;
 						}
@@ -108,7 +85,7 @@ int bhk::solve() {
 	}
 	int rVal = std::numeric_limits<int>::max();
 	for (int i = 1; i < this->ncount; i++) {
-		int testVal = DPmap[std::make_pair(allCities,i)] + this->getDistance(0,i);
+		int testVal = DPmap[std::make_pair(allCities,i)] + this->dmatrix[0][i];
 		if (testVal < rVal) {
 			rVal = testVal;
 		}
