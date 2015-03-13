@@ -39,6 +39,8 @@ static int seed = 0;
 static int geometric_data = 0;
 static int method = 1;
 static int ncount_rand = 0;
+static int ncount_rand_e = 0;
+static int max_elen_rand_e = 0;
 static int gridsize_rand = 100;
 static int bestlen = 10000000;
 static int BOUND = 1001;
@@ -60,8 +62,12 @@ int main (int ac, char **av)
     if (debug)  printf ("Debugging turned on\n");
     if (geometric_data) printf ("Geometric data\n");
 
-    if (!fname && !ncount_rand) {
-        printf ("Must specify a problem file or use -k for random prob\n");
+    if (!fname && !ncount_rand && !ncount_rand_e) {
+        printf ("Must specify a problem file, or use -k or -e for random problem\n");
+        rval = 1; goto CLEANUP;
+    }
+    if (ncount_rand_e && !max_elen_rand_e) {
+        printf ("Must specify a maximum edge length with -l when using -e\n");
         rval = 1; goto CLEANUP;
     }
     printf ("Seed = %d\n", seed);
@@ -504,8 +510,10 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
        	        fprintf (stderr, "Input file %s has invalid format\n",filename);
                 rval = 1;  goto CLEANUP;
             }
-        } else {
+        } else if (ncount_rand) {
             ncount = ncount_rand;
+        } else {
+            ncount = ncount_rand_e;
         }
 
         x = (double *) malloc (ncount * sizeof (double));
@@ -522,7 +530,7 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
                     rval = 1;  goto CLEANUP;
 	        }
             }
-        } else {
+        } else if (ncount_rand) {
             rval = CO759_build_xy (ncount, x, y, gridsize_rand);
             if (rval) {
                 fprintf (stderr, "CO759_build_xy failed\n");
@@ -564,7 +572,12 @@ static int getprob (char *filename, int *p_ncount, int *p_ecount, int **p_elist,
             for (j = i+1; j < ncount; j++) {
                 elist[2*ecount] = i;
                 elist[2*ecount+1] = j;
-                w = euclid_edgelen (i, j, x, y);
+                if (ncount_rand_e) {
+                    w = (int) (random () % max_elen_rand_e + 1);
+                    printf ("Edge length for %d,%d: %d\n", i, j, w);
+                } else {
+                    w = euclid_edgelen (i, j, x, y);
+                }
                 elen[ecount] = w;
                 ecount++;
                 distmatrix[i][j] = w;
@@ -601,7 +614,7 @@ static int parseargs (int ac, char **av)
         return 1;
     }
 
-    while ((c = getopt (ac, av, "b:gk:s:m:")) != EOF) {
+    while ((c = getopt (ac, av, "b:gk:e:l:s:m:")) != EOF) {
         switch (c) {
         case 'b':
             gridsize_rand = atoi (optarg); 
@@ -611,6 +624,12 @@ static int parseargs (int ac, char **av)
             break;
         case 'k':
             ncount_rand = atoi (optarg);
+            break;
+        case 'e':
+            ncount_rand_e = atoi (optarg);
+            break;
+        case 'l':
+            max_elen_rand_e = atoi (optarg);
             break;
         case 'm':
             method = atoi (optarg);
@@ -641,6 +660,8 @@ static void usage (char *f)
     fprintf (stderr, "   -b d  gridsize d for random problems\n");
     fprintf (stderr, "   -g    prob_file has x-y coordinates\n");
     fprintf (stderr, "   -k d  generate problem with d cities\n");
+    fprintf (stderr, "   -e d  generate problem with d cities and random edge lengths\n");
+    fprintf (stderr, "   -l d  maximum length of an edge when using -e is d\n");
     fprintf (stderr, "   -s d  random seed\n");
     fprintf (stderr, "   -m d  \n");
     fprintf (stderr, "         1. enumeration \n");
