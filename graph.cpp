@@ -110,7 +110,7 @@ std::vector<int> graph::min_spanning_tree(std::vector<int> must_include) {
   std::sort(edges.begin(), edges.end());
   mst.reserve(ncount-1);
 
-  for( int i = 0; i < must_include.size(); i++ ) {
+  for( unsigned i = 0; i < must_include.size(); i++ ) {
     if( nodes[elist[2*must_include[i]]].find_label() != nodes[elist[2*must_include[i]+1]].find_label() ) {
       mst.push_back(must_include[i]);
       nodes[elist[2*must_include[i]]].join(&nodes[elist[2*must_include[i]+1]]);
@@ -122,7 +122,7 @@ std::vector<int> graph::min_spanning_tree(std::vector<int> must_include) {
   
   for( int i = 0; i < ecount; i++ ) {
     if( nodes[edges[i].end1].find_label() != nodes[edges[i].end2].find_label() ) {
-      for( int j = 0; j < must_include.size(); j++ ) {
+      for( unsigned j = 0; j < must_include.size(); j++ ) {
         if( i == must_include[j] ) {
           continue;
         }
@@ -130,7 +130,7 @@ std::vector<int> graph::min_spanning_tree(std::vector<int> must_include) {
       mst.push_back(edges[i].ind);
       nodes[edges[i].end1].join(&(nodes[edges[i].end2]));
     } 
-    if( mst.size() == ncount-1 ) {
+    if( (int)mst.size() == ncount-1 ) {
       break;
     }
   }

@@ -244,7 +244,7 @@ int w_candidate(int ncount, int ecount, int *elist, int *elen, int ignore, int *
 	for( unsigned i = 0; i < mst.size(); i++ ) {
 		tot += elen_sub[mst[i]];
 	}
-	if ( mst.size() != ncount_sub - 1 ) {
+	if ( (int)mst.size() != ncount_sub - 1 ) {
 		return 1000;
 	}
 

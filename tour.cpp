@@ -43,7 +43,6 @@ static int ncount_rand_e = 0;
 static int max_elen_rand_e = 0;
 static int gridsize_rand = 100;
 static int bestlen = 10000000;
-static int BOUND = 1001;
 
 int main (int ac, char **av)
 {
@@ -276,23 +275,52 @@ void permute(int ncount, int *tour, int k, int tourlen, int **dist)
 int nntour(int ncount, int ecount, int *elist, int *elen, int *tlist)
 {
     int start = 0;
-    int *marks = new int[ecount];
+    int *marks = new int[ncount];
     int i, j, best, bestend = 0, end = start, len = 0;
+    int nn_bestlen = bestlen;
 
-    for (i = 0; i < ncount; i++) marks[i] = 0;
-    for (i = 1; i < ncount; i++) {
-        marks[end] = 1;
-        best = bestlen;
-        for (j = 0; j < ncount; j++) {
-            if (marks[j] == 0 && elen[j] < best) {
-                best = elen[j]; bestend = j;
+    for (start = 0; start < ncount; start ++ ) {
+        end = start;
+        len = 0;
+        for (i = 0; i < ncount; i++) marks[i] = 0;
+        for (i = 1; i < ncount; i++) {
+            marks[end] = 1;
+            best = bestlen;
+            for (j = 0; j < ecount; j++) {
+                if( elist[2*j] == end ) {
+                    if (marks[elist[2*j+1]] == 0 && elen[j] < best) {
+                        best = elen[j]; bestend = elist[2*j+1];
+                    } 
+                }
+                if( elist[2*j+1] == end ) {
+                    if (marks[elist[2*j]] == 0 && elen[j] < best) {
+                        best = elen[j]; bestend = elist[2*j];
+                    } 
+                }
+                // if (marks[j] == 0 && elen[j] < best) {
+                //     best = elen[j]; bestend = elist[2*j+1];
+                // }
+            }
+            len += best; end = bestend;
+        }
+
+        int len_before_ret = len;
+        for(i = 0; i < ecount; i++ ) {
+            if( (elist[2*i] == start && elist[2*i+1] == end) || (elist[2*i+1] == start && elist[2*i] == end) ) {
+                len += elen[i];
+                break;
             }
         }
-        len += best; end = bestend;
+        if( len == len_before_ret ) { // Couldn't find returning edge on sparse graph
+            len *= 2;
+        }
+        if( len  < nn_bestlen ) {
+            nn_bestlen = len;
+        }
     }
-	delete [] marks;
-    return len;
-}
+
+    delete [] marks;
+    return nn_bestlen;}
 
 static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, int *elist, int *elen, int *tlist) {
 	double * x = NULL;
@@ -356,13 +384,13 @@ static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, 
 		char lu[2] = {'L','U'};
 		double bd[2];
 		
+        // Change fractional edge to be 1
+        bd[0] = 1.0; bd[1] = 1.0;
+        CO759lp_chgbds(lp,cnt,indices,lu,bd);
+        solve(depth+1,bbcount,lp,ncount,ecount,elist,elen,tlist);
+        
 		// Change fractional edge to be 0
 		bd[0] = 0.0; bd[1] = 0.0;
-		CO759lp_chgbds(lp,cnt,indices,lu,bd);
-		solve(depth+1,bbcount,lp,ncount,ecount,elist,elen,tlist);
-		
-		// Change fractional edge to be 1
-		bd[0] = 1.0; bd[1] = 1.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);
 		solve(depth+1,bbcount,lp,ncount,ecount,elist,elen,tlist);
 		
