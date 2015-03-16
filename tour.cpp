@@ -98,7 +98,7 @@ int main (int ac, char **av)
         case 2:
             bestlen = nntour(ncount,ecount,elist,elen,tlist);
             printf ("Nearest neighbor tour: %d\n", bestlen);
-            printf( "One Tree tour: %d\n", one_tree_tsp(ncount,ecount,elist,elen,bestlen));
+            one_tree_tsp(ncount,ecount,elist,elen,bestlen);
             break;
         case 3: {
                 bhk* bhk_solver = new bhk();
@@ -388,7 +388,7 @@ static int solve(int depth, int *bbcount, CO759lp * lp, int ncount, int ecount, 
         bd[0] = 1.0; bd[1] = 1.0;
         CO759lp_chgbds(lp,cnt,indices,lu,bd);
         solve(depth+1,bbcount,lp,ncount,ecount,elist,elen,tlist);
-        
+
 		// Change fractional edge to be 0
 		bd[0] = 0.0; bd[1] = 0.0;
 		CO759lp_chgbds(lp,cnt,indices,lu,bd);

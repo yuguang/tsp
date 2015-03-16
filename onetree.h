@@ -17,7 +17,9 @@ public:
 bool operator<(const branch_node & l, const branch_node & r);
 
 int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound);
-int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<int> Y, int * pi, bool update_pi, std::vector<int> * deg_not_2);
-int w_candidate(int ncount, int ecount, int *elist, int *elen, int ignore, int * pi, int * v, std::set<int> X, std::set<int> Y);
+int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<int> Y, int * pi, 
+	bool update_pi, std::vector<int> * deg_not_2, std::vector<int> * tree_edges);
+int w_candidate(int ncount, int ecount, int *elist, int *elen, int * elen_new, int ignore, int * pi, int * v, 
+		std::set<int> X, std::set<int> Y, std::vector<int> * tree_edges);
 
 #endif
