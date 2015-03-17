@@ -56,7 +56,9 @@ int main (int ac, char **av)
     rval = parseargs (ac, av);
     if (rval) goto CLEANUP;
 
-    printf ("Problem name: %s\n", fname);
+	if (fname) {
+		printf ("Problem name: %s\n", fname);
+	}
     printf ("Seed = %d\n", seed);
     if (debug)  printf ("Debugging turned on\n");
     if (geometric_data) printf ("Geometric data\n");
@@ -124,7 +126,7 @@ int main (int ac, char **av)
         default:
             break;
     }
-    printf ("Running Time: %.2f seconds\n", CO759_zeit() - szeit);
+    printf ("Running Time: %.6f seconds\n", CO759_zeit() - szeit);
     fflush (stdout);
 
 CLEANUP:
