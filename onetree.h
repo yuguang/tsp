@@ -9,8 +9,11 @@ public:
 	std::set<int> X, Y;
 	int * pi;
 	int w;
+	int ncount;
 
 	branch_node(std::set<int> X, std::set<int> Y, int ncount, int *pi, int w);
+	branch_node(const branch_node& other);
+	branch_node & operator=(const branch_node& other);
 	~branch_node();
 };
 

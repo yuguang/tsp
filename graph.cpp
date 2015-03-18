@@ -95,7 +95,7 @@ std::vector<int> graph::delta(std::vector<int> s) {
   return d;
 }
 
-std::vector<int> graph::min_spanning_tree(std::vector<int> must_include) {
+std::vector<int> graph::min_spanning_tree(std::vector<int> must_include, std::vector<int> must_ignore) {
   tnode *nodes = new tnode[ncount];
   std::vector<edge> edges;
   std::vector<int> mst;
@@ -121,7 +121,7 @@ std::vector<int> graph::min_spanning_tree(std::vector<int> must_include) {
   }
   
   for( int i = 0; i < ecount; i++ ) {
-    if( nodes[edges[i].end1].find_label() != nodes[edges[i].end2].find_label() ) {
+    if( nodes[edges[i].end1].find_label() != nodes[edges[i].end2].find_label() && find(must_ignore.begin(),must_ignore.end(),i) == must_ignore.end()) {
       for( unsigned j = 0; j < must_include.size(); j++ ) {
         if( i == must_include[j] ) {
           continue;
