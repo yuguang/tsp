@@ -7,6 +7,8 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <ios>
+#include <fstream>
 #include <getopt.h>
 #include <cmath>
 #include <cplex.h>
@@ -54,9 +56,18 @@ int main (int ac, char **av)
     seed = (int) CO759_real_zeit ();
 
     rval = parseargs (ac, av);
+    std::ofstream log("logfile.txt", std::ios_base::app | std::ios_base::out);
+    // write newline first because program is terminated if execution time exceeds limit
+    log << "\n";
+    log << gridsize_rand;
+    log << ",";
+    log << ncount_rand;
+    log << ",";
     if (rval) goto CLEANUP;
 
-    printf ("Problem name: %s\n", fname);
+	if (fname) {
+		printf ("Problem name: %s\n", fname);
+	}
     printf ("Seed = %d\n", seed);
     if (debug)  printf ("Debugging turned on\n");
     if (geometric_data) printf ("Geometric data\n");
@@ -124,7 +135,8 @@ int main (int ac, char **av)
         default:
             break;
     }
-    printf ("Running Time: %.2f seconds\n", CO759_zeit() - szeit);
+    printf ("Running Time: %.6f seconds\n", CO759_zeit() - szeit);
+    log << (CO759_zeit() - szeit);
     fflush (stdout);
 
 CLEANUP:
