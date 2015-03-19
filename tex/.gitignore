@@ -1,0 +1,6 @@
+# Tex Ignores
+*.aux
+*.log
+*.out
+*.gz
+*.pdf
