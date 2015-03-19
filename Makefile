@@ -15,6 +15,11 @@ test_tour: test_tour.o bhk.o bhk2.o
 test_graph: test_graph.o graph.o tnode.o
 	  $(CC) $(CPPFLAGS) -o test_graph test_graph.o graph.o tnode.o -lm -lpthread
 
+package:
+	tar -czf cplex.tar.gz /software
+	tar -czf /tmp/tsp.tar.gz .
+	rm cplex.tar.gz
+
 clean:
 	rm -f *.o tour test_graph test_tour
 

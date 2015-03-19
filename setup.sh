@@ -1,4 +1,4 @@
 #!/bin/sh
-tar -xf cplex.tar -C /
+tar -zxf cplex.tar.gz -C /
 make clean
 make tour
