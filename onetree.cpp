@@ -21,11 +21,33 @@ branch_node::branch_node(std::set<int> X, std::set<int> Y, int ncount, int *pi, 
 	assert( pi != 0 );
 	memcpy(this->pi, pi, ncount*sizeof(int));
 	this->w = w;
+	this->ncount = ncount;
+}
+
+branch_node::branch_node(const branch_node& other) {
+	this->X = other.X;
+	this->Y = other.Y;
+	this->pi = new int[other.ncount];
+	assert( other.pi != 0 );
+	memcpy(this->pi, other.pi, other.ncount*sizeof(int));
+	this->w = other.w;
+	this->ncount = other.ncount;
+}
+
+branch_node & branch_node::operator=(const branch_node& other) {
+		this->X = other.X;
+		this->Y = other.Y;
+		assert( other.pi != 0 );
+		memcpy(this->pi, other.pi, other.ncount*sizeof(int));
+		this->w = other.w;
+		this->ncount = other.ncount;
+
+		return (*this);
 }
 
 branch_node::~branch_node() {
 	if( pi ) {
-		// delete [] pi; pi = 0; // Not sure why this causes crashes !?
+		delete [] pi; pi = 0; // Not sure why this causes crashes !?
 	}
 }
 
@@ -58,10 +80,13 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 
 	while( Q.size() != 0 ) {
 		branch_node current = Q.top();
-		Q.pop(); branches++;
 		bound = current.w;	
+		// std::cout << bound << std::endl;
 
 		if( bound > upper_bound ) {
+			// std::cout << "bad upper bound" << std::endl;
+			// std::cout << "pi: "; for( int i = 0; i < ncount; i++ ) std::cout << current.pi[i] << " "; std::cout << std::endl;
+			Q.pop(); branches++;
 			continue;
 		}
 
@@ -69,7 +94,7 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 		X = current.X;
 		Y = current.Y;
 
-		
+		Q.pop(); branches++;
 
 		std::set<int>::iterator it;
 		// std::cout << "Popped (" << current.w << "), branches: " << branches << ", Q size: " << Q.size() << std::endl;
@@ -112,6 +137,7 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 		for(int i = 0; ; i++) {
 			deg_not_2.erase(deg_not_2.begin(),deg_not_2.end());
 			bound = w(ncount, ecount, elist, elen, X, Y, pi, true, &deg_not_2, &edges);
+			// std::cout << "pi: "; for( int j = 0; j < ncount; j++ ) std::cout << pi[j] << " "; std::cout << std::endl;
 
 			if( i >= p ) {
 				if( w_cache[i%p] > max_w_p_ago ) {
@@ -124,7 +150,7 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 				memcpy(pi_prime, pi, ncount*sizeof(int));
 				deg_not_2_prime = deg_not_2;
 			}
-			if( bound >= upper_bound ) {
+			if( bound > upper_bound ) {
 				do_branch = false;
 				break;
 			}
@@ -164,40 +190,32 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 
 	}
 
-	// std::cout << "branches: " << branches << std::endl;
 	delete [] pi; pi = 0;
 	delete [] pi_prime; pi_prime = 0;
 	return upper_bound;
 }
 
-int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<int> Y, int * pi,  bool update_pi, 
-	std::vector<int> * deg_not_2, std::vector<int> * tree_edges) {
-	int min_w = 1000000;
-	int * v = new int[ncount], *min_v = new int[ncount];
-	int * elen_new = new int[ecount];
-	int real_tot = 0;
+int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<int> Y, int * pi,
+	bool update_pi, std::vector<int> * deg_not_2, std::vector<int> * tree_edges) {
+	int min_w = 1000000, bound, i, ignore;
+	int * v = new int[ncount], *min_v = new int[ncount], * elen_new = new int[ecount];
 	std::vector<int> edges;
 
-	for( int i = 0; i < ecount; i++ ) elen_new[i] = elen[i] + pi[elist[2*i]] + pi[elist[2*i+1]];
+	for( i = 0; i < ecount; i++ ) elen_new[i] = elen[i] + pi[elist[2*i]] + pi[elist[2*i+1]];
 
-	int bound;
-	for( int ignore = 0; ignore < ncount; ignore++ ) {
+	
+	for( ignore = 0; ignore < ncount; ignore++ ) {
 		edges.erase(edges.begin(), edges.end());
 		bound = w_candidate(ncount, ecount, elist, elen, elen_new, ignore, pi, v, X, Y, &edges); //changes v
-		if( bound < min_w ) {
+		if( bound <= min_w ) {
 			min_w = bound;
 			memcpy(min_v, v, ncount*sizeof(int));
 			(*tree_edges) = edges;
-
-			real_tot = 0;
-			for( int i = 0; i < ncount; i++ ) {
-				real_tot += elen[tree_edges->at(i)];
-			}
 		}
 	}
 
 	// Update pi
-	for( int i = 0; i < ncount; i++ ) {
+	for( i = 0; i < ncount; i++ ) {
 		if( min_v[i] != 0 ) {
 			deg_not_2->push_back(i);
 		}
@@ -206,8 +224,6 @@ int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<i
 		}
 	}
 
-	// std::cout << "min_w: " << min_w << ", deg != 2: " << deg_not_2->size() << std::endl;
-	// std::cout << "real_tot: " << real_tot << std::endl;
 
 	delete [] v;
 	delete [] min_v;
@@ -281,6 +297,10 @@ int w_candidate(int ncount, int ecount, int *elist, int * elen, int *elen_new, i
 		tree_edges->push_back(orig_ind[mst[i]]);
 	}
 	if ( (int)mst.size() != ncount_sub - 1 ) {
+		delete [] elist_sub;
+		delete [] elen_sub;
+		delete [] orig_ind;
+
 		return 100000000;
 	}
 

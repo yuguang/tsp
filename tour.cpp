@@ -144,6 +144,13 @@ CLEANUP:
     if (tlist) free (tlist);
     if (elist) free (elist);
     if (elen) free (elen);
+    if(distmatrix) {
+        for(int i = 0; i < ncount; i++ ) {
+            delete [] distmatrix[i];
+        }
+        delete [] distmatrix;
+    }
+
     return rval;
 }
 

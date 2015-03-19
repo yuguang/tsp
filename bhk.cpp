@@ -15,31 +15,28 @@ void bhk::init(int ncount, int **dmatrix) {
 	this->dmatrix = dmatrix;
 }
 
-std::vector<std::vector<int> > bhk::getSubsets(int size, int end) {
+std::vector<unsigned long long> bhk::getSubsets(int size, int end) {
 	// returns all subsets of {1, ..., end} with size elements
-	std::vector<std::vector<int> > rval;
+	std::vector<unsigned long long> rval;
 	if (size == 1) {
 		for (int i = 1; i <= end; i++) {
-			std::vector<int> v;
-			v.push_back(i);
-			rval.push_back(v);
+			rval.push_back(1<<((unsigned long long) i-1));
 		}
 		return rval;
 	}
 	if (size == end) {
 		// in this case we know all the cities must be included
-		std::vector<int> subset;
-		subset.reserve(size);
+		unsigned long long subset = 0;
 		for (int i = 1; i <= end; i++) {
-			subset.push_back(i);
+			subset += 1<<((unsigned long long) i-1);
 		}
 		rval.push_back(subset);
 		return rval;
 	}
-	std::vector<std::vector<int> > withEnd = this->getSubsets(size - 1, end - 1);
-	std::vector<std::vector<int> > withoutEnd = this->getSubsets(size, end - 1);
+	std::vector<unsigned long long> withEnd = this->getSubsets(size - 1, end - 1);
+	std::vector<unsigned long long> withoutEnd = this->getSubsets(size, end - 1);
 	for (unsigned int i = 0; i < withEnd.size(); i++) {
-		withEnd[i].push_back(end);
+		withEnd[i] += (1<<((unsigned long long) end-1));
 	}
 	// copied from http://stackoverflow.com/questions/3177241/best-way-to-concatenate-two-vectors
 	rval.reserve( withEnd.size() + withoutEnd.size() ); // preallocate memory
@@ -49,39 +46,39 @@ std::vector<std::vector<int> > bhk::getSubsets(int size, int end) {
 }
 
 int bhk::solve() {
-	std::map<std::pair<std::vector<int>,int>,int> DPmap; // stores dynamic programming results
+	std::map<std::pair<unsigned long long,int>,int> DPmap; // stores dynamic programming results
 	// all subsets should include city 0, so to save space we don't bother adding it in
 	for (int i = 1; i < this->ncount; i++) {
-		std::vector<int> keyVector;
-		keyVector.push_back(i);
-		DPmap[std::make_pair(keyVector,i)] = this->dmatrix[0][i];
-		//this->printDPval(keyVector,i,this->getDistance(0,i));
+	    unsigned long long subset = 1<<((unsigned long long) i-1);
+		DPmap[std::make_pair(subset,i)] = this->dmatrix[0][i];
+		//this->printDPval(subset,i,this->dmatrix[0][i]);
 	}
 	for (int subset_size = 2; subset_size < this->ncount; subset_size++) {
-		std::vector<std::vector<int> > subsets = this->getSubsets(subset_size, this->ncount - 1);
+		std::vector<unsigned long long> subsets = this->getSubsets(subset_size, this->ncount - 1);
 		for (unsigned int i = 0; i < subsets.size(); i++) {
-			for (int j = 0; j < subset_size; j++) {
-				// subsets[i][j] is the city we want to add to the path
-				std::vector<int> subset_minus_j = subsets[i];
-				subset_minus_j.erase(subset_minus_j.begin() + j);
-				int minVal = std::numeric_limits<int>::max();
-				for (int k = 0; k < subset_size; k++) {
-					// loop through possible second last cities
-					if (k != j) {
-						int testVal = DPmap[std::make_pair(subset_minus_j,subsets[i][k])] + this->dmatrix[subsets[i][j]][subsets[i][k]];
-						if (testVal < minVal) {
-							minVal = testVal;
+			for (int j = 1; j < this->ncount; j++) {
+				// j is the city we want to add to the path
+				if (subsets[i] & (1<<((unsigned long long) j-1))) {
+					unsigned long long subset_minus_j = subsets[i] - (1<<((unsigned long long) j-1));
+					int minVal = std::numeric_limits<int>::max();
+					for (int k = 1; k < this->ncount; k++) {
+						// loop through possible second last cities
+						if (subset_minus_j & (1<<((unsigned long long) k-1))) { // if k is acutally in subset_minus_j
+							int testVal = DPmap[std::make_pair(subset_minus_j,k)] + this->dmatrix[k][j];
+							if (testVal < minVal) {
+								minVal = testVal;
+							}
 						}
 					}
+					DPmap[std::make_pair(subsets[i],j)] = minVal;
+					//this->printDPval(subsets[i],j,minVal);
 				}
-				DPmap[std::make_pair(subsets[i],subsets[i][j])] = minVal;
-				//this->printDPval(subsets[i],subsets[i][j],minVal);
 			}
 		}
 	}
-	std::vector<int> allCities;
+	unsigned long long allCities = 0;
 	for (int i = 1; i < this->ncount; i++) {
-		allCities.push_back(i);
+		allCities += 1<<((unsigned long long) i-1);
 	}
 	int rVal = std::numeric_limits<int>::max();
 	for (int i = 1; i < this->ncount; i++) {
@@ -93,10 +90,11 @@ int bhk::solve() {
 	return rVal;
 }
 
-void bhk::printDPval(std::vector<int> subset, int endcity, int value) {
-	printf("DP[{%d", subset[0]);
-	for (unsigned int i = 1; i < subset.size(); i++) {
-		printf(",%d", subset[i]);
+void bhk::printDPval(unsigned long long subset, int endcity, int value) {
+	printf("DP[{0");
+	for (int i = 1; i < this->ncount; i++) {
+		if (subset & 1<<((unsigned long long) i-1))
+		printf(",%d", i);
 	}
 	printf("},%d] = %d\n", endcity, value);
 }

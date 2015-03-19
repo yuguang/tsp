@@ -29,7 +29,7 @@ class graph {
                 std::vector<int> delta(std::vector<int> s);
 
                 // Computes the MST for the graph
-                std::vector<int> min_spanning_tree(std::vector<int> must_include);
+                std::vector<int> min_spanning_tree(std::vector<int> must_include = std::vector<int>(), std::vector<int> must_ignore = std::vector<int>());
 };
 
 #endif

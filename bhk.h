@@ -12,10 +12,10 @@ class bhk {
 		int **dmatrix; // distances between edges
 
 		// function to help generate subsets
-		std::vector<std::vector<int> > getSubsets(int size, int end);
+		std::vector<unsigned long long> getSubsets(int size, int end);
 		
 		// prints out a value in the dynamic programming table (for debugging)
-		void printDPval(std::vector<int> subset, int endcity, int value);
+		void printDPval(unsigned long long subset, int endcity, int value);
 
 	public:
 
