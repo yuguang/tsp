@@ -1,0 +1,78 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amsfonts,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage[colorlinks]{hyperref}
+\usepackage{algpseudocode}
+\usepackage{algorithmicx}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{framed}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{enumerate}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{shapes}
+
+\newcommand{\C}{{\mathbb{C}}}
+\newcommand{\F}{{\mathbb{F}}}
+\newcommand{\R}{{\mathbb{R}}}
+\newcommand{\Z}{{\mathbb{Z}}}
+\newcommand{\e}[1]{\ensuremath{\times 10^{#1}}}
+
+\newcommand{\ve}[1]{\boldsymbol{#1}}
+\newcommand{\norm}[1]{\|{#1}\|}
+\newcommand{\code}{\begingroup
+  \catcode`_=12 \docode}
+\newcommand{\docode}[2]{
+	\begin{framed}
+	\lstinputlisting[basicstyle=\ttfamily\scriptsize,language=#2,title=\underline{\texttt{#1}},tabsize=4,numbers=left]{#1}\end{framed}\endgroup}
+
+
+\setlength\parindent{0pt}
+
+\lstset{basicstyle=\ttfamily}
+\lstset{language=C++,
+                basicstyle=\ttfamily,
+                keywordstyle=\color{blue}\ttfamily,
+                stringstyle=\color{red}\ttfamily,
+                commentstyle=\color{gray}\ttfamily}
+
+\begin{document}
+
+\thispagestyle{empty}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Solving Small TSP Instances \\ ~ \\ \textit{You'll Clean That Up Before You Leave}}
+
+\author{Shawn Brunstig, Ian Dimock, Yuguang Zhang \\ University of Waterloo}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\section{Methods}
+\subsection{Enumeration}
+\subsection{Held-Karp 1-Trees}
+\subsection{Bellman-Held-Karp Dynamic Programming}
+\subsection{Subtour Branch and Cut}
+\section{Testing Environment}
+\section{Test Data}
+\section{Discussion}
+\section{Conclusions}
+
+\section*{Appendix}
+\subsection*{Result Tables}
+\subsection*{Code}
+\code{../onetree.h}{C++}
+\code{../onetree.cpp}{C++}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
