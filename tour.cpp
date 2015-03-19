@@ -7,7 +7,7 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <ios>
+#include <iostream>
 #include <fstream>
 #include <getopt.h>
 #include <cmath>
@@ -46,6 +46,8 @@ static int ncount_rand_e = 0;
 static int max_elen_rand_e = 0;
 static int gridsize_rand = 100;
 static int bestlen = 10000000;
+using std::ios;
+using std::ofstream;
 
 int main (int ac, char **av)
 {
@@ -53,17 +55,19 @@ int main (int ac, char **av)
     int *elist = (int *) NULL, *elen = (int *) NULL, *tlist = (int *) NULL;
     int **distmatrix = (int **) NULL;
     double szeit;
+    ofstream log;
 
     seed = (int) CO759_real_zeit ();
 
     rval = parseargs (ac, av);
-    std::ofstream log("logfile.txt", std::ios_base::app | std::ios_base::out);
+    log.open("logfile.txt", ios::app);
     // write newline first because program is terminated if execution time exceeds limit
-    log << "\n";
-    log << gridsize_rand;
-    log << ",";
-    log << ncount_rand;
-    log << ",";
+    log << "\n"
+        << gridsize_rand
+        << ","
+        << ncount_rand
+        << ",";
+    log.close();
     if (rval) goto CLEANUP;
 
 	if (fname) {
@@ -143,7 +147,9 @@ int main (int ac, char **av)
             break;
     }
     printf ("Running Time: %.6f seconds\n", CO759_zeit() - szeit);
+    log.open("logfile.txt", ios::app);
     log << (CO759_zeit() - szeit);
+    log.close();
     fflush (stdout);
 
 CLEANUP:
