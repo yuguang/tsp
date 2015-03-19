@@ -66,6 +66,8 @@ int main (int ac, char **av)
         << gridsize_rand
         << ","
         << ncount_rand
+        << ","
+        << method
         << ",";
     log.close();
     if (rval) goto CLEANUP;
