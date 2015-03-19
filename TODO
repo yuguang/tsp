@@ -1,6 +1,17 @@
-enumeration Yuguang
-input parsing and flags Yuguang
-generation of randome Euclidean instances Yuguang
-Held-Karp spanning tree Ian
-Bellman-Held-Karp spanning tree Shawn
-Branch and bound DONE
+Finalize bash scripts - Yuguang
+
+Print optimal tour weights to log file - Yuguang, Ian, Shawn
+
+Create .tex outline - Ian
+	Introduction/Motivation - Shawn
+	Method descriptions:
+		1-Tress - Ian
+		BHK - Shawn
+		Enumeration - Yuguang
+		Branch-Bound - Ian
+	Testing Environment - Yuguang
+	Test Data - Shawn
+	Discussion of results - later...
+	Conclusions - later...
+	
+Data Analysis - Yuguang
