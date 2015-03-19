@@ -22,6 +22,7 @@
 #include "bhk2.h"
 #include "bhk3.h"
 #include "onetree.h"
+#include <limits>
 
 static void usage (char *f);
 static int getprob (char *fname, int *p_ncount, int *p_ecount, int **p_elist,
@@ -48,6 +49,7 @@ static int gridsize_rand = 100;
 static int bestlen = 10000000;
 using std::ios;
 using std::ofstream;
+typedef std::numeric_limits< double > dbl;
 
 int main (int ac, char **av)
 {
@@ -150,7 +152,8 @@ int main (int ac, char **av)
     }
     printf ("Running Time: %.6f seconds\n", CO759_zeit() - szeit);
     log.open("logfile.txt", ios::app);
-    log << (CO759_zeit() - szeit);
+    log.precision(dbl::digits10);
+    log << std::fixed << (CO759_zeit() - szeit);
     log.close();
     fflush (stdout);
 
