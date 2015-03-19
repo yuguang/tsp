@@ -1,5 +1,5 @@
 #!/bin/sh
-for i in `seq 50 1000`;
+for i in 100, 1000, 5000;
 do
   for j in `seq 5 25`;
   do
