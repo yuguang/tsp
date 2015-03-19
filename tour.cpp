@@ -20,6 +20,7 @@
 #include "graph.h"
 #include "bhk.h"
 #include "bhk2.h"
+#include "bhk3.h"
 #include "onetree.h"
 
 static void usage (char *f);
@@ -130,6 +131,12 @@ int main (int ac, char **av)
                 bhk2* bhk2_solver = new bhk2();
                 bhk2_solver->init(ncount,distmatrix);
                 printf("Bellman-Held-Karp 2: %d\n", bhk2_solver->solve());
+            }
+            break;
+        case 6: {
+                bhk3* bhk3_solver = new bhk3();
+                bhk3_solver->init(ncount,distmatrix);
+                printf("Bellman-Held-Karp 3: %d\n", bhk3_solver->solve());
             }
             break;
         default:
@@ -716,5 +723,6 @@ static void usage (char *f)
     fprintf (stderr, "         3. Bellman-Held-Karp dynamic programming \n");
     fprintf (stderr, "         4. Branch and bound linear programming \n");
     fprintf (stderr, "         5. Bellman-Held-Karp implementation 2 \n");
+    fprintf (stderr, "         6. Bellman-Held-Karp implementation 3 \n");
 }
 
