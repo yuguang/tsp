@@ -49,7 +49,7 @@ static int gridsize_rand = 100;
 static int bestlen = 10000000;
 using std::ios;
 using std::ofstream;
-typedef std::numeric_limits< double > dbl;
+typedef std::numeric_limits< long > lng;
 
 int main (int ac, char **av)
 {
@@ -74,10 +74,9 @@ int main (int ac, char **av)
     log.close();
     if (rval) goto CLEANUP;
 
-	if (fname) {
-		printf ("Problem name: %s\n", fname);
-	}
-    printf ("Seed = %d\n", seed);
+    if (fname) {
+            printf ("Problem name: %s\n", fname);
+    }
     if (debug)  printf ("Debugging turned on\n");
     if (geometric_data) printf ("Geometric data\n");
 
@@ -111,7 +110,6 @@ int main (int ac, char **av)
     szeit = CO759_zeit ();
     switch (method) {
         case 1:
-            bestlen = nntour(ncount,ecount,elist,elen,tlist);
             printf ("Nearest neighbor tour: %d\n", bestlen);
             enumeration(ncount,ecount,elist,elen,tlist,distmatrix);
             break;
@@ -152,7 +150,7 @@ int main (int ac, char **av)
     }
     printf ("Running Time: %.6f seconds\n", CO759_zeit() - szeit);
     log.open("logfile.txt", ios::app);
-    log.precision(dbl::digits10);
+    log.precision(lng::digits10);
     log << std::fixed << (CO759_zeit() - szeit);
     log.close();
     fflush (stdout);
