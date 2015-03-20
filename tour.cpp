@@ -10,6 +10,10 @@
 #include <iostream>
 #include <fstream>
 #include <getopt.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 #include <cmath>
 #include <cplex.h>
 #include <math.h>
@@ -56,8 +60,8 @@ int main (int ac, char **av)
     int rval  = 0, ncount = 0, ecount = 0;
     int *elist = (int *) NULL, *elen = (int *) NULL, *tlist = (int *) NULL;
     int **distmatrix = (int **) NULL;
-    double szeit;
     ofstream log;
+    struct timeval tvBegin, tvEnd, tvDiff;
 
     seed = (int) CO759_real_zeit ();
 
@@ -107,7 +111,7 @@ int main (int ac, char **av)
         rval = 1;  goto CLEANUP; 
     }
 
-    szeit = CO759_zeit ();
+    gettimeofday(&tvBegin, NULL);
     switch (method) {
         case 1:
             printf ("Nearest neighbor tour: %d\n", bestlen);
@@ -148,10 +152,12 @@ int main (int ac, char **av)
         default:
             break;
     }
-    printf ("Running Time: %.6f seconds\n", CO759_zeit() - szeit);
+    gettimeofday(&tvEnd, NULL);
+    timeval_subtract(&tvDiff, &tvEnd, &tvBegin);
+    printf("Running Time: %ld.%06ld\n", tvDiff.tv_sec, tvDiff.tv_usec);
     log.open("logfile.txt", ios::app);
     log.precision(lng::digits10);
-    log << std::fixed << (CO759_zeit() - szeit);
+    log << std::fixed << (tvDiff.tv_sec + tvDiff.tv_usec/1000000.0);
     log.close();
     fflush (stdout);
 
