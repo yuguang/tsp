@@ -125,7 +125,8 @@ int main (int ac, char **av)
         case 3: {
                 bhk* bhk_solver = new bhk();
                 bhk_solver->init(ncount,distmatrix);
-                printf("Bellman-Held-Karp 1: %d\n", bhk_solver->solve());
+                bestlen = bhk_solver->solve();
+                printf("Bellman-Held-Karp 1: %d\n", bestlen);
         	}
         	break;
         case 4:
@@ -140,13 +141,15 @@ int main (int ac, char **av)
         case 5: {
                 bhk2* bhk2_solver = new bhk2();
                 bhk2_solver->init(ncount,distmatrix);
-                printf("Bellman-Held-Karp 2: %d\n", bhk2_solver->solve());
+                bestlen = bhk2_solver->solve();
+                printf("Bellman-Held-Karp 2: %d\n", bestlen);
             }
             break;
         case 6: {
                 bhk3* bhk3_solver = new bhk3();
                 bhk3_solver->init(ncount,distmatrix);
-                printf("Bellman-Held-Karp 3: %d\n", bhk3_solver->solve());
+                bestlen = bhk3_solver->solve();
+                printf("Bellman-Held-Karp 3: %d\n", bestlen);
             }
             break;
         default:
@@ -156,6 +159,7 @@ int main (int ac, char **av)
     timeval_subtract(&tvDiff, &tvEnd, &tvBegin);
     printf("Running Time: %ld.%06ld\n", tvDiff.tv_sec, tvDiff.tv_usec);
     log.open("logfile.txt", ios::app);
+    log << bestlen << ",";
     log.precision(lng::digits10);
     log << std::fixed << (tvDiff.tv_sec + tvDiff.tv_usec/1000000.0);
     log.close();
