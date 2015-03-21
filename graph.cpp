@@ -114,9 +114,6 @@ std::vector<int> graph::min_spanning_tree(std::vector<int> must_include, std::ve
     if( nodes[elist[2*must_include[i]]].find_label() != nodes[elist[2*must_include[i]+1]].find_label() ) {
       mst.push_back(must_include[i]);
       nodes[elist[2*must_include[i]]].join(&nodes[elist[2*must_include[i]+1]]);
-      // std::cout << "including " << must_include[i] << std::endl;
-    } else {
-      // std::cout << "FAAAAAIIIIIL" << std::endl;
     }
   }
   
