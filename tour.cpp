@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <getopt.h>
 #include <sys/time.h>
@@ -44,6 +45,7 @@ static int connect(CO759lp * lp, int ncount, int ecount, int *elist, int *elen, 
 static char *fname = (char *) NULL;
 static int debug = 0;
 static int seed = 0;
+static int fnum = 0;
 static int geometric_data = 0;
 static int method = 1;
 static int ncount_rand = 0;
@@ -66,7 +68,10 @@ int main (int ac, char **av)
     seed = (int) CO759_real_zeit ();
 
     rval = parseargs (ac, av);
-    log.open("logfile.txt", ios::app);
+    std::stringstream sstm;
+    sstm << "logfile" << fnum << ".txt";
+    std::string logfile = sstm.str();
+    log.open(logfile.c_str(), ios::app);
     // write newline first because program is terminated if execution time exceeds limit
     log << "\n"
         << gridsize_rand
@@ -158,7 +163,7 @@ int main (int ac, char **av)
     gettimeofday(&tvEnd, NULL);
     timeval_subtract(&tvDiff, &tvEnd, &tvBegin);
     printf("Running Time: %ld.%06ld\n", tvDiff.tv_sec, tvDiff.tv_usec);
-    log.open("logfile.txt", ios::app);
+    log.open(logfile.c_str(), ios::app);
     log << bestlen << ",";
     log.precision(lng::digits10);
     log << std::fixed << (tvDiff.tv_sec + tvDiff.tv_usec/1000000.0);
@@ -687,10 +692,13 @@ static int parseargs (int ac, char **av)
         return 1;
     }
 
-    while ((c = getopt (ac, av, "b:gk:e:l:s:m:")) != EOF) {
+    while ((c = getopt (ac, av, "b:f:gk:e:l:s:m:")) != EOF) {
         switch (c) {
         case 'b':
             gridsize_rand = atoi (optarg); 
+            break;
+        case 'f':
+            fnum = atoi (optarg);
             break;
         case 'g':
             geometric_data = 1;
@@ -732,6 +740,7 @@ static void usage (char *f)
     fprintf (stderr, "Usage: %s [-see below-] [prob_file]\n", f);
     fprintf (stderr, "   -b d  gridsize d for random problems\n");
     fprintf (stderr, "   -g    prob_file has x-y coordinates\n");
+    fprintf (stderr, "   -f d  set the log file number\n");
     fprintf (stderr, "   -k d  generate problem with d cities\n");
     fprintf (stderr, "   -e d  generate problem with d cities and random edge lengths\n");
     fprintf (stderr, "   -l d  maximum length of an edge when using -e is d\n");
