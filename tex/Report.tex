@@ -56,18 +56,54 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Introduction}
+
+Many algorithms have been developed for the travelling salesman problem. Asymptotic behaviour can be analysed for these methods, but methods that are superior asymptotically may turn out to be slower for small problems due to large overhead costs. For example, enumerating all possible tours may take $O(n!)$ operations, but for a problem with only $n=5$ cities, could this be faster than the $O(n^2 2^n)$ Bellman-Held-Karp algorithm? This project explores such questions by implementing a few common algorithms for the travelling salesman problem, then comparing their run time for problems of varying sizes and types.
+
+Section \ref{sec:methods} outlines the algorithms that were implemented for this project, including some implementation details and optimizations. Section \ref{sec:environment} describes the environment in which we tested the algorithms. Section \ref{sec:data} describes the types of problems we ran the algorithms over. Section \ref{sec:discussion} discusses the results. Finally, Section \ref{sec:conclusions} summarizes the project. The raw timing data as well as our code are contained in the appendix.
+
 \section{Methods}
+\label{sec:methods}
+
 \subsection{Enumeration}
+
 \subsection{Held-Karp 1-Trees}
+
 \subsection{Bellman-Held-Karp Dynamic Programming}
 
-The Bellman-Held-Karp algorithm was discovered independently by both Richard Bellman \cite{Bellman} and Michael Held and Richard Karp \cite{HeldKarp} in 1962.
+The Bellman-Held-Karp algorithm was discovered independently by both Richard Bellman \cite{Bellman} and Michael Held and Richard Karp \cite{HeldKarp} in 1962. It uses dynamic programming, which means it uses the solutions of smaller problems to create a solution to the larger problem.
+
+The algorithm is best described with a recursive formula. First we pick some start city $x$. The choice of $x$ does not matter, as long as it stays fixed throughout the algorithm. If $t$ is a city, and $S$ is a set of cities that includes $t$ but not $x$, then we define $opt$ to be our dynamic programming table where $opt(S,t)$ is the minimum cost of a path that starts at $x$, ends at $t$, and passes through every city in $S$ exactly once (and does not pass through any cities not in $S$).
+
+The base cases are simple to compute for this dynamic programming table. $opt(\{ t \} , t)$ is simply the distance from $x$ to $t$, since those are the only cities that can be in the path. We use $dist(x,t)$ to represent this distance. So we have
+
+\[ opt(\{ t \}, t) = dist(x,t) \qquad \forall t \]
+
+When $S$ has more than one city, we define $opt(S,t)$ recursively. Let $q \neq t$ be some city in $S$. We let $q$ be the second last city in the path, and we can find the optimal length by considering all possible values of $q$. We need the length of the shortest path to $q$, plus the distance from $q$ to $t$:
+
+\[ opt(S,t) = \min_{q \in S, q \neq t} ( opt(S \setminus \{ t \} , q) + dist(q, t) ) \]
+
+Finally, we need to calculate the optimal tour length. Following similar reasoning to the above formula, we know that the optimal tour must pass through every city in the problem, then return to $x$. So $x$ is the last city, and we let $t$ be the second last. If $N$ is the set of all cities in the problem except for $x$, then the optimal tour length $v^*$ is
+
+\[ v^* = \min_{t \in N} ( opt(N , t) + dist(t, x) ) \]
+
+The algorithm has a running time of $O(n^2 2^n)$, which gives it the best asymptotic bound that has been achieved so far \cite{bico}.
+
+TODO: describe algorithm optimizations
 
 \subsection{Subtour Branch and Cut}
+
 \section{Testing Environment}
+\label{sec:environment}
+
 \section{Test Data}
+\label{sec:data}
+
 \section{Discussion}
+\label{sec:discussion}
+
 \section{Conclusions}
+\label{sec:conclusions}
+
 
 \nocite{*}
 \bibliographystyle{plain}
