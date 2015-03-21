@@ -17,6 +17,7 @@ test_graph: test_graph.o graph.o tnode.o
 
 package:
 	tar -czf cplex.tar.gz /software
+	rm logfile*
 	tar -czf /tmp/tsp.tar.gz .
 	rm cplex.tar.gz
 
