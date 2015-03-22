@@ -7,37 +7,34 @@
 #include <cstring>
 #include <set>
 #include <queue>
-#include <cassert>
 
-const int t_bar = 1;
-const int p = 25;
+const int t_bar = 1; // Value used to adjust pi
+const int p = 15; // If maximum lower bound has not changed in p iterations, stop
 
-bool do_print_tour = false;
-
+// Constructor for a node in our branching tree
 branch_node::branch_node(std::set<int> X, std::set<int> Y, int ncount, int *pi, int w) {
 	this->X = X;
 	this->Y = Y;
 	this->pi = new int[ncount];
-	assert( pi != 0 );
 	memcpy(this->pi, pi, ncount*sizeof(int));
 	this->w = w;
 	this->ncount = ncount;
 }
 
+// Copy constructor
 branch_node::branch_node(const branch_node& other) {
 	this->X = other.X;
 	this->Y = other.Y;
 	this->pi = new int[other.ncount];
-	assert( other.pi != 0 );
 	memcpy(this->pi, other.pi, other.ncount*sizeof(int));
 	this->w = other.w;
 	this->ncount = other.ncount;
 }
 
+// Assignment Operator
 branch_node & branch_node::operator=(const branch_node& other) {
 		this->X = other.X;
 		this->Y = other.Y;
-		assert( other.pi != 0 );
 		memcpy(this->pi, other.pi, other.ncount*sizeof(int));
 		this->w = other.w;
 		this->ncount = other.ncount;
@@ -45,47 +42,43 @@ branch_node & branch_node::operator=(const branch_node& other) {
 		return (*this);
 }
 
+// Destructor
 branch_node::~branch_node() {
 	if( pi ) {
-		delete [] pi; pi = 0; // Not sure why this causes crashes !?
+		delete [] pi;
 	}
 }
 
+// Comparison operator for the priority queue
 bool operator<(const branch_node & l, const branch_node & r) {
 	return l.w > r.w; // Because we want a min heap we flip the sign
 }
 
 int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound) {
-	int branches = 0;
-	int *pi = new int[ncount];
-	int bound, max_w = -100000, max_w_p_ago = -100000;
-	int *pi_prime = new int[ncount];
-	bool do_branch;
+	int branches = 0, bound, max_w = -100000, max_w_p_ago = -100000, last, i, j, edge;
+	int *pi = new int[ncount], *pi_prime = new int[ncount];
+	bool do_branch, found_branch;
 	std::priority_queue<branch_node> Q;
-	std::vector<int> edges;
+	std::vector<int> edges, w_cache, deg_not_2, deg_not_2_prime;
+	std::set<int> X, Y, X_new, Y_new;
 
-	for( int i = 0; i < ncount; i++ ) pi[i] = 0;
-		
-
-	std::vector<int> w_cache;
+	for( i = 0; i < ncount; i++ ) pi[i] = 0;
+ 
 	w_cache.reserve(p);
 
-	std::set<int> X, Y;
-	std::vector<int> deg_not_2, deg_not_2_prime;
+	// Find starting lower bound
+	bound = w(ncount, ecount, elist, elen, &X, &Y, pi, false, &deg_not_2, &edges);
 
-	bound = w(ncount, ecount, elist, elen, X, Y, pi, false, &deg_not_2, &edges);
-
+	// Push to priority Q
 	branch_node start = branch_node(X,Y,ncount,pi,bound);
 	Q.push(start);
 
 	while( Q.size() != 0 ) {
+		// Get branch node with smallest current lower bound
 		branch_node current = Q.top();
 		bound = current.w;	
-		// std::cout << bound << std::endl;
 
 		if( bound > upper_bound ) {
-			// std::cout << "bad upper bound" << std::endl;
-			// std::cout << "pi: "; for( int i = 0; i < ncount; i++ ) std::cout << current.pi[i] << " "; std::cout << std::endl;
 			Q.pop(); branches++;
 			continue;
 		}
@@ -106,15 +99,17 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 		max_w = -100000;
 		max_w_p_ago = -100000;
 		deg_not_2.erase(deg_not_2.begin(),deg_not_2.end());
-		bound = w(ncount, ecount, elist, elen, X, Y, pi, false, &deg_not_2, &edges);
+
+		bound = w(ncount, ecount, elist, elen, &X, &Y, pi, false, &deg_not_2, &edges);
+
+		// If popped branch node is a tour, then it is optimal
 		if( deg_not_2.size() == 0 ) {
-			int last = elist[2*edges[0]];
+			last = elist[2*edges[0]];
 			std::cout << "One Tree Tour: " << last;
 			edges.erase(edges.begin(),edges.begin()+1);
-			for( int j = 0; j < ncount-1; j++ ) {
-				unsigned i;
-				for( i = 0; i < edges.size(); i++ ) {
-					int edge = edges[i];
+			for( j = 0; j < ncount-1; j++ ) {
+				for( i = 0; i < (int)edges.size(); i++ ) {
+					edge = edges[i];
 					if( elist[2*edge] == last ) {
 						last = elist[2*edge+1];
 						std::cout << " " << last;
@@ -134,10 +129,10 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 			return bound;
 		}
 
-		for(int i = 0; ; i++) {
+		// Otherwise, we iterate pi to increase the lower bound
+		for( i = 0; ; i++) {
 			deg_not_2.erase(deg_not_2.begin(),deg_not_2.end());
-			bound = w(ncount, ecount, elist, elen, X, Y, pi, true, &deg_not_2, &edges);
-			// std::cout << "pi: "; for( int j = 0; j < ncount; j++ ) std::cout << pi[j] << " "; std::cout << std::endl;
+			bound = w(ncount, ecount, elist, elen, &X, &Y, pi, true, &deg_not_2, &edges);
 
 			if( i >= p ) {
 				if( w_cache[i%p] > max_w_p_ago ) {
@@ -158,31 +153,32 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 				break;
 			}
 		}
-		// std::cout << "iterated pi" << std::endl;
-		if( deg_not_2_prime.size() == 0 ) {
-			// std::cout << "FOUND TOUR 2" << std::endl;
-			// std::cout << "branches: " << branches << std::endl;
-			bound = w(ncount, ecount, elist, elen, X, Y, pi_prime, false, &deg_not_2, &edges);
+
+		// If all edges degree 2, we have a tour, but we don't know it is optimal until it is popped from queue.
+		if( deg_not_2_prime.size() == 0 ) {	
+			bound = w(ncount, ecount, elist, elen, &X, &Y, pi_prime, false, &deg_not_2, &edges);
+			upper_bound = bound;
 			Q.push(branch_node(X,Y,ncount,pi_prime,bound));
 		}
 		if( do_branch ) {
-			bool done = false;
-			for( unsigned i = 0; i < deg_not_2_prime.size(); i++ ) {
-				for( int j = 0; j < ecount; j++ ) {
+			found_branch = false;
+			// We choose a node that does not have degree 2, and branch by rforcing it in/out of the 1-trees
+			for( i = 0; i < (int)deg_not_2_prime.size(); i++ ) {
+				for( j = 0; j < ecount; j++ ) {
 					if( (elist[2*j] == deg_not_2_prime[i] || elist[2*j+1] == deg_not_2_prime[i]) && X.find(j) == X.end() && Y.find(j) == Y.end() ) {
-						std::set<int> X_new = X;
-						std::set<int> Y_new = Y;
+						X_new = X;
+						Y_new = Y;
 						X_new.insert(j);
 						Y_new.insert(j);
-						bound = w(ncount, ecount, elist, elen, X_new, Y, pi_prime, false, &deg_not_2, &edges);
+						bound = w(ncount, ecount, elist, elen, &X_new, &Y, pi_prime, false, &deg_not_2, &edges);
 						Q.push(branch_node(X_new,Y,ncount,pi_prime,bound));
-						bound = w(ncount, ecount, elist, elen, X, Y_new, pi_prime, false, &deg_not_2, &edges);
+						bound = w(ncount, ecount, elist, elen, &X, &Y_new, pi_prime, false, &deg_not_2, &edges);
 						Q.push(branch_node(X,Y_new,ncount,pi_prime,bound));
-						done = true;
+						found_branch = true;
 						break;
 					}
 				}
-				if( done ) {
+				if( found_branch ) {
 					break;
 				}
 			}
@@ -190,23 +186,40 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 
 	}
 
-	delete [] pi; pi = 0;
-	delete [] pi_prime; pi_prime = 0;
+	delete [] pi;
+	delete [] pi_prime;
 	return upper_bound;
 }
 
-int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<int> Y, int * pi,
+// Computes the minimum cost 1-tree among the given nodes with edge weights modified by pi
+int w(int ncount, int ecount, int *elist, int *elen, std::set<int> * X, std::set<int> * Y, int * pi,
 	bool update_pi, std::vector<int> * deg_not_2, std::vector<int> * tree_edges) {
-	int min_w = 1000000, bound, i, ignore;
+	int min_w = 1000000, bound, i, ignore, SMALL_LEN = -10000000, BIG_LEN = 10000000;
 	int * v = new int[ncount], *min_v = new int[ncount], * elen_new = new int[ecount];
 	std::vector<int> edges;
+	std::vector<edge> E;
 
 	for( i = 0; i < ecount; i++ ) elen_new[i] = elen[i] + pi[elist[2*i]] + pi[elist[2*i+1]];
 
+	// Sort all the edges by the modified weight
+	for( i = 0; i < ecount; i++ ) {
+		if( X->find(i) != X->end() ) {
+			// We want to force this edge into the tree, so give it a small weight
+			E.push_back(edge(elist[2*i], elist[2*i+1], SMALL_LEN, i));
+		} else if( Y->find(i) != Y->end() ) {
+			// We want to force this edge into the tree, so give it a large weight
+			E.push_back(edge(elist[2*i], elist[2*i+1], BIG_LEN, i));
+		} else {
+			// Give this edge the weight modified by pi
+			E.push_back(edge(elist[2*i], elist[2*i+1], elen_new[i], i));
+		}
+	}
+	std::sort(E.begin(), E.end());
 	
+	// Compute a sequence of 1-trees, cycling through which node is ignored in MST computation
 	for( ignore = 0; ignore < ncount; ignore++ ) {
 		edges.erase(edges.begin(), edges.end());
-		bound = w_candidate(ncount, ecount, elist, elen, elen_new, ignore, pi, v, X, Y, &edges); //changes v
+		bound = w_candidate(ncount, ecount, elen, &E, ignore, pi, v, &edges);
 		if( bound <= min_w ) {
 			min_w = bound;
 			memcpy(min_v, v, ncount*sizeof(int));
@@ -216,6 +229,7 @@ int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<i
 
 	// Update pi
 	for( i = 0; i < ncount; i++ ) {
+		// Find nodes without degree 2
 		if( min_v[i] != 0 ) {
 			deg_not_2->push_back(i);
 		}
@@ -224,7 +238,6 @@ int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<i
 		}
 	}
 
-
 	delete [] v;
 	delete [] min_v;
 	delete [] elen_new;
@@ -232,127 +245,68 @@ int w(int ncount, int ecount, int *elist, int *elen, std::set<int> X, std::set<i
 	return min_w;
 }
 
-int w_candidate(int ncount, int ecount, int *elist, int * elen, int *elen_new, int ignore, int * pi, 
-		int * v, std::set<int> X, std::set<int> Y, std::vector<int> * tree_edges) {
-	std::vector<edge> edges;
-	int SMALL_LEN = -1000000;
+int w_candidate(int ncount, int ecount, int * elen, std::vector<edge> * E, int ignore, int * pi, 
+		int * v, std::vector<int> * tree_edges) {
+	int e1 = -1, e2 = -1, edges_found = 0, i, tot = 0;;
+	tnode *nodes = new tnode[ncount];
+	std::vector<int> mst;
 
-	std::set<int>::iterator it;
+	for( i = 0; i < ncount; i++ ) nodes[i].init(i);
 
-	// sort only edges incident to node ignoring
-	for( int i = 0; i < ecount; i++ ) {
-		if(elist[2*i] == ignore || elist[2*i+1] == ignore) {
-			if( X.find(i) != X.end() ) {
-				edges.push_back(edge(elist[2*i], elist[2*i+1], SMALL_LEN, i));
-			} else {
-				edges.push_back(edge(elist[2*i], elist[2*i+1], elen_new[i], i));
+	mst.reserve(ncount-2);
+
+	// Run kruskal's algorithm, making sure to ignore the desired node
+	for( i = 0; i < ecount; i++ ) {
+		if( E->at(i).end1 == ignore || E->at(i).end2 == ignore ) {
+			if( edges_found == 0 ) {
+				e1 = i;
+				edges_found++;
+			} else if( edges_found == 1 ) {
+				e2 = i;
+				edges_found++;
 			}
-		}
-	}
-	std::sort(edges.begin(), edges.end());
-
-	int ecount_sub = ecount - edges.size();
-
-	int ncount_sub = ncount - 1;
-	int * elist_sub = new int[ecount_sub*2];
-	int * elen_sub = new int[ecount_sub];
-	std::vector<int> must_include;
-	int * orig_ind = new int[ecount];
-
-	int j = 0;
-	for( int i = 0; i < ecount; i++ ) {
-		if(elist[2*i] != ignore  && elist[2*i+1] != ignore ) {
-			if( Y.find(i) != Y.end() ) {
-				ecount_sub--;
-				continue;
-			}
-			if( elist[2*i] > ignore ) {
-				elist_sub[2*j] = elist[2*i]-1;	
-			} else {
-				elist_sub[2*j] = elist[2*i];
-			}
-			if( elist[2*i+1] > ignore ) {
-				elist_sub[2*j+1] = elist[2*i+1]-1;
-			} else {
-				elist_sub[2*j+1] = elist[2*i+1];
-			}
-			if( X.find(i) != X.end() ) {
-				must_include.push_back(j);
-			}
-
-			elen_sub[j] = elen_new[i];
-			orig_ind[j] = i;
-			j++;
+		} else if( nodes[E->at(i).end1].find_label() != nodes[E->at(i).end2].find_label() ) {
+			mst.push_back(i);
+			nodes[E->at(i).end1].join(&(nodes[(E->at(i).end2)]));
+		} 
+		if( (int)mst.size() == ncount-2 && edges_found == 2 ) {
+			break;
 		}
 	}
 
-	graph G;
-	G.init(ncount_sub, ecount_sub, elist_sub, elen_sub);
-
-	std::vector<int> mst = G.min_spanning_tree(must_include);
-
-	int tot = 0;
-	for( unsigned i = 0; i < mst.size(); i++ ) {
-		tot += elen[orig_ind[mst[i]]];
-		tree_edges->push_back(orig_ind[mst[i]]);
-	}
-	if ( (int)mst.size() != ncount_sub - 1 ) {
-		delete [] elist_sub;
-		delete [] elen_sub;
-		delete [] orig_ind;
+	// If for some reason branching cause graph to be disconnected, return an artificially large bound
+	if ( (int)mst.size() != ncount-2 || e1 == -1 || e2 == -1 ) {
+		delete [] nodes;
 
 		return 100000000;
 	}
 
-	for( int i = 0; i < ncount; i++ ) v[i] = 0;
+	// Compute w
+	for(  i = 0; i < ncount; i++ ) v[i] = -2;
 
-	tot += elen[edges[0].ind];
-	tot += elen[edges[1].ind];
-
-	tree_edges->push_back(edges[0].ind);
-	tree_edges->push_back(edges[1].ind);
-
-	if( edges[0].end1 == ignore ) {
-		v[edges[0].end2] += 1;
-	} else {
-		v[edges[0].end1] += 1;
-	}
-	if( edges[1].end1 == ignore ) {
-		v[edges[1].end2] += 1;
-	} else {
-		v[edges[1].end1] += 1;
-	}
-	int end1, end2;
-	v[ignore] = 2;
-
-
-
-	for( int i = 0; i < ncount_sub-1; i++ ) {
-		end1 = elist[2*orig_ind[mst[i]]];
-		end2 = elist[2*orig_ind[mst[i]]+1];
-		v[end1]++;
-		v[end2]++;
+	for( i = 0; i < (int)mst.size(); i++ ) {
+		tot += elen[E->at(mst[i]).ind];
+		tree_edges->push_back(E->at(mst[i]).ind);
+		v[E->at(mst[i]).end1]++;
+		v[E->at(mst[i]).end2]++;
 	}
 
-	for( int i = 0; i < ncount; i++ ) v[i] -= 2;
+	tot += elen[E->at(e1).ind];
+	tot += elen[E->at(e2).ind];
 
-	for( int i = 0; i < ncount; i++ ) {
+	tree_edges->push_back(E->at(e1).ind);
+	tree_edges->push_back(E->at(e2).ind);
+
+	v[E->at(e1).end1]++;
+	v[E->at(e1).end2]++;
+	v[E->at(e2).end1]++;
+	v[E->at(e2).end2]++;
+
+	for( i = 0; i < ncount; i++ ) {
 		tot += pi[i] * v[i];
 	}
 
-	if( do_print_tour ) {
-		std::cout << edges[0].ind << " " << edges[1].ind;
-		for( unsigned i = 0; i < mst.size(); i++ ) {
-			std::cout << " " << orig_ind[mst[i]];
-		}
-		std::cout << " -- ";
-		for( int i = 0; i < ncount; i++ ) std::cout << v[i] << " ";
-		std::cout << std::endl;
-	}
-
-	delete [] elist_sub;
-	delete [] elen_sub;
-	delete [] orig_ind;
+	delete [] nodes;
 
 	return tot;
 }
