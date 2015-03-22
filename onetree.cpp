@@ -90,6 +90,7 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 		Q.pop(); branches++;
 
 		std::set<int>::iterator it;
+		// Debug prints
 		// std::cout << "Popped (" << current.w << "), branches: " << branches << ", Q size: " << Q.size() << std::endl;
 		// std::cout << "pi: "; for( int i = 0; i < ncount; i++ ) std::cout << pi[i] << " "; std::cout << std::endl;
 		// std::cout << "X: "; for( it = X.begin(); it != X.end(); it++ ) std::cout << (*it) << " "; std::cout << std::endl;
@@ -131,21 +132,20 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 
 		// Otherwise, we iterate pi to increase the lower bound
 		for( i = 0; ; i++) {
-			deg_not_2.erase(deg_not_2.begin(),deg_not_2.end());
 			bound = w(ncount, ecount, elist, elen, &X, &Y, pi, true, &deg_not_2, &edges);
 
 			if( i >= p ) {
-				if( w_cache[i%p] > max_w_p_ago ) {
+				if( w_cache[i%p] >= max_w_p_ago ) {
 					max_w_p_ago = w_cache[i%p];
 				}
 			}
 			w_cache[i%p] = bound;
-			if( bound > max_w ) {
+			if( bound >= max_w ) {
 				max_w = bound;
 				memcpy(pi_prime, pi, ncount*sizeof(int));
 				deg_not_2_prime = deg_not_2;
 			}
-			if( bound > upper_bound ) {
+			if( bound >= upper_bound ) {
 				do_branch = false;
 				break;
 			}
@@ -157,7 +157,7 @@ int one_tree_tsp(int ncount, int ecount, int *elist, int *elen, int upper_bound)
 		// If all edges degree 2, we have a tour, but we don't know it is optimal until it is popped from queue.
 		if( deg_not_2_prime.size() == 0 ) {	
 			bound = w(ncount, ecount, elist, elen, &X, &Y, pi_prime, false, &deg_not_2, &edges);
-			upper_bound = bound;
+			upper_bound = bound; // We can update upper bound though
 			Q.push(branch_node(X,Y,ncount,pi_prime,bound));
 		}
 		if( do_branch ) {
@@ -198,6 +198,8 @@ int w(int ncount, int ecount, int *elist, int *elen, std::set<int> * X, std::set
 	int * v = new int[ncount], *min_v = new int[ncount], * elen_new = new int[ecount];
 	std::vector<int> edges;
 	std::vector<edge> E;
+
+	deg_not_2->erase(deg_not_2->begin(),deg_not_2->end());
 
 	for( i = 0; i < ecount; i++ ) elen_new[i] = elen[i] + pi[elist[2*i]] + pi[elist[2*i+1]];
 
