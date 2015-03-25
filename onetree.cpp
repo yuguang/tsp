@@ -283,7 +283,7 @@ int w_candidate(int ncount, int ecount, int * elen, std::vector<edge> * E, int i
 		return 100000000;
 	}
 
-	// Compute w
+	// Compute w (lower bound)
 	for(  i = 0; i < ncount; i++ ) v[i] = -2;
 
 	for( i = 0; i < (int)mst.size(); i++ ) {
