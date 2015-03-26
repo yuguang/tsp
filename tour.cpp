@@ -74,6 +74,8 @@ int main (int ac, char **av)
     log.open(logfile.c_str(), ios::app);
     // write newline first because program is terminated if execution time exceeds limit
     log << "\n"
+        << seed
+        << ","
         << gridsize_rand
         << ","
         << ncount_rand
