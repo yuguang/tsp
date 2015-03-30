@@ -290,11 +290,7 @@ CLEANUP:
     if (x) free (x);
     return rval;
 }
-// elist - array 2*ecount
-// elist[2*i] is end0 of ith edge
-// elist[2*i+1] is end1 of ith edge
-// elen - array ecount
-// elen[i] is length of ith edge
+
 int enumeration(int ncount, int ecount, int *elist, int *elen, int *tlist, int **distmatrix)
 {
     int *tour = new int[ncount];
