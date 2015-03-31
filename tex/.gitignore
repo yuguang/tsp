@@ -3,6 +3,6 @@
 *.log
 *.out
 *.gz
-*.pdf
+
 *.bbl
 *.blg
