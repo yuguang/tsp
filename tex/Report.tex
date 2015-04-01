@@ -90,6 +90,8 @@ Over the development of the 1-tree algorithm, many optimizations were made. Many
 
 The Bellman-Held-Karp algorithm was discovered independently by both Richard Bellman \cite{Bellman} and Michael Held and Richard Karp \cite{HeldKarp} in 1962. It uses dynamic programming, which means it uses the solutions of smaller problems to create a solution to the larger problem.
 
+\subsubsection{Algorithm}
+
 The algorithm is best described with a recursive formula. First we pick some start city $x$. The choice of $x$ does not matter, as long as it stays fixed throughout the algorithm. If $t$ is a city, and $S$ is a set of cities that includes $t$ but not $x$, then we define $opt$ to be our dynamic programming table where $opt(S,t)$ is the minimum cost of a path that starts at $x$, ends at $t$, and passes through every city in $S$ exactly once (and does not pass through any cities not in $S$).
 
 The base cases are simple to compute for this dynamic programming table. $opt(\{ t \} , t)$ is simply the distance from $x$ to $t$, since those are the only cities that can be in the path. We use $dist(x,t)$ to represent this distance. So we have
@@ -106,7 +108,19 @@ Finally, we need to calculate the optimal tour length. Following similar reasoni
 
 The algorithm has a running time of $O(n^2 2^n)$, which gives it the best asymptotic bound that has been achieved so far \cite{bico}.
 
-TODO: describe algorithm optimizations
+\subsubsection{Implementation}
+
+We tested 3 implementations of the Bellman-Held-Karp algorithm. First was our own implementation, which was written before looking at any other existing implementations. Writing this implementation ensured we had a solid understanding of the algorithm, along with some implementation ideas that were not influenced by what others had done.
+
+The code for this first implementation can be found in \texttt{bhk.h} and \texttt{bhk.cpp}, and can be run using the \texttt{-m 3} flag with our main program. It has a few unique implementation ideas compared to the other two, the first of which was to store the dynamic programming table in a C++ map, rather than an array. This made it easier to implement, since we did not need to calculate the size of the table beforehand or figure out how to translate a subset into a position in that array. However, this method is expected to be slower than one which uses an array, since an array has $O(1)$ lookup time while the map would require $O(\log(s))$ time where $s$ is the number of entries in the table.
+
+Another unique idea was to generate all subsets of size $k$ at once using a recursive method. This idea increases the amount of memory required, so it may not be ideal for large problems.
+
+Finally, a subset of cities was initially represented as a vector of integers. Later, the code was changed to use an integer where each bit represented whether or not a particular city was included in the subset. This change was inspired by the second implementation, and although no rigorous testing was done, it seemed to significantly improve the running time.
+
+The second implementation was taken directly from \cite{bico}. It is the recursive code that is first presented when that chapter describes the Bellman-Held-Karp algorithm. This code was put into \texttt{bhk2.h} and \texttt{bhk2.cpp}, and can be run using the \texttt{-m 5} flag with our main program.
+
+The final implementation of the algorithm is also from \cite{bico}. The chapter describes various optimizations to improve the running time, which are all used in this implementation. The original C code for this implementation is in \texttt{tour{\textunderscore}dp3.c}. This code was translated into C++ to fit with our program, so the version we used can be found in \texttt{bhk3.h} and \texttt{bhk3.cpp}. This implementation can be run with the \texttt{-m 6} flag.
 
 \subsection{Subtour Branch and Cut}
 
