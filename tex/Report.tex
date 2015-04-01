@@ -80,7 +80,11 @@ $$ c_{i,j} \leftarrow c_{i,j} + \pi_i + \pi_j $$
 
 We note that since each node must have degree two in the optimal tour, this modification of the edge weights changes the optimal tour cost by $2 \sum\limits_i^n \pi_i$, but does not change the tour itself. The minimum cost 1-tree however is not guaranteed to remain the same on the modified graph.
 
-Held and Karp showed that from these minimum cost 1-trees we can produce lower bounds for the TSP. By modifying $\ve{\pi}$ the ascent algorithm attempts to produce minimum cost 1-trees that look more and more like tours, increase the lower bounds until eventually the optimal tour is found.
+Held and Karp showed that from these minimum cost 1-trees we can produce lower bounds for the TSP of the from:
+\[ C^* \geq \sum\limits_{(i,j) \in K^*} c_{i,j} + \sum\limits_i (2 - d_i)\pi_i = w(\ve{\pi}) \]
+Where $K^*$ is the minimum cost 1-Tree defined on the graph modified by $\ve{\pi}$ and $d_i$ is the degree of node $i$ in that 1-Tree. 
+
+We note that because $\ve{\pi}$ defines a minimum cost 1-tree, we can consider our lower bounds on $C^*$ - the cost of the optimal tour - as simply a function of $\ve{\pi}$, namely $w(\ve{\pi})$. By modifying $\ve{\pi}$ the ascent algorithm attempts to produce minimum cost 1-trees that look more and more like tours, increase the lower bounds until eventually the optimal tour is found.
 
 The algorithm we implemented consists of three main components. The first is the computation of the minimum cost 1-trees. This is a fairly simple process which involves computing a minimum spanning tree on all but one node and then adding that nodes two cheapest edges to the MST to produce a 1-tree. By repeating this process on each node, one of the 1-trees generated is guaranteed to be of minimum cost. The second component is a simple iterative algorithm to modify $\ve{pi}$. This is done by increasing and decreasing respectively the nodes in the 1-tree which have more or less than degree 2. The last component is a branching method. We used the technique used in homework 2 of forcing a particular edge into or out of the 1-trees. We kept our branching nodes in a priority queue so that as soon as we pop a 1-tree from our queue that is a tour, we know it is the optimal one.
 
@@ -146,6 +150,25 @@ Command line flags are provided to run these different problem-generating method
 
 \section{Discussion}
 \label{sec:discussion}
+We first consider Figures 1 and 2 which show the mean running times of our various algorithms on a log scale. From these plots we can see some clear thresholds on which algorithms perform better. Firstly we see that on problem instances up to and including 6 cities, the enumeration algorithm is the fastest.
+
+For bigger than 6 city problems we can see that the BHK dynamic programming algorithm performs better up until 14 cities. From 15 to 20 city problems we can see that either BHK or the Branch-Cut algorithm is superior depending on the test instances. From 21 cities onward we see that the Branch-Cut algorithm dominates all other algorithms
+
+The 1-Tree algorithm is notably lacking here. We can see that it trend in runtime is similar to that of the dynamic programming algorithm, but consistently slower.
+
+\begin{figure}[H]
+\center
+\includegraphics[width=0.8\textwidth]{s1-log}
+\caption{Mean running times of various algorithms on different sized geometric TSP problems. Computed on Server-1 machine.}
+\end{figure}
+
+\begin{figure}[H]
+\center
+\includegraphics[width=0.8\textwidth]{b40-log}
+\caption{Mean running times of various algorithms on different sized geometric TSP problems. Computed on Benchmark-40 machine.}
+\end{figure}
+
+We now consider some performance plots at meaningful city sizes to further illustrate the regimes we have found.
 
 \section{Conclusions}
 \label{sec:conclusions}
@@ -158,8 +181,15 @@ Command line flags are provided to run these different problem-generating method
 \section*{Appendix}
 \subsection*{Result Tables}
 \subsection*{Code}
-\code{../onetree.h}{C++}
-\code{../onetree.cpp}{C++}
+Relevant code files are as follows:
+
+\begin{itemize}
+\item Main program driver, Nearest-Neighbour, Branch-Cut code: \texttt{tour.cpp}
+\item Graph constructs: \texttt{graph.cpp, edge.cpp, tnode.cpp}
+\item 1-Tree Code: \texttt{onetree.cpp}
+\item BHK Dynamic Programming: \texttt{bhk1.cpp, bhk2.cpp, bhk3.cpp}
+\item Datamill scripts: \texttt{collect.sh, run.sh, setup.sh, tour.sh}
+\end{itemize}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
