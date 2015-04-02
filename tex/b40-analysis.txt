@@ -2,41 +2,56 @@
 > runtimes = read.csv("b40-s.csv")
 > ncount=factor(runtimes[,3])
 > method=factor(runtimes[,4])
+> seed=factor(runtimes[,1])
+> gridsize=factor(runtimes[,2])
 > y=runtimes[,6]
-> summary(aov(y~ncount*method))
-                 Df  Sum Sq Mean Sq F value Pr(>F)    
-ncount           14 1233294   88092   196.9 <2e-16 ***
-method            5 1476941  295388   660.2 <2e-16 ***
-ncount:method    70 9533686  136196   304.4 <2e-16 ***
-Residuals     12670 5668830     447                   
+> summary(aov(y~ncount+method+ncount:method+seed+gridsize))
+                 Df  Sum Sq Mean Sq F value   Pr(>F)    
+ncount           14 1233294   88092 198.096  < 2e-16 ***
+method            5 1476941  295388 664.248  < 2e-16 ***
+seed             99   94478     954   2.146 3.76e-10 ***
+gridsize          2    1184     592   1.331    0.264    
+ncount:method    70 9517473  135964 305.746  < 2e-16 ***
+Residuals     12569 5589382     445                     
 ---
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 200 observations deleted due to missingness
 > runtimes = read.csv("b40-m.csv")
 > ncount=factor(runtimes[,3])
 > method=factor(runtimes[,4])
+> seed=factor(runtimes[,1])
+> gridsize=factor(runtimes[,2])
 > y=runtimes[,6]
-> summary(aov(y~ncount*method))
-                Df  Sum Sq Mean Sq F value Pr(>F)    
-ncount           5 2779913  555983   369.8 <2e-16 ***
-method           4 7005308 1751327  1165.0 <2e-16 ***
-ncount:method   20 7232556  361628   240.6 <2e-16 ***
-Residuals     4008 6025316    1503                   
+> summary(aov(y~ncount+method+ncount:method+seed+gridsize))
+                Df  Sum Sq Mean Sq  F value   Pr(>F)    
+ncount           5 2779913  555983  382.141  < 2e-16 ***
+method           4 7005308 1751327 1203.730  < 2e-16 ***
+seed            99  272527    2753    1.892 3.45e-07 ***
+gridsize         2   66248   33124   22.767 1.48e-10 ***
+ncount:method   20 7234738  361737  248.631  < 2e-16 ***
+Residuals     3907 5684359    1455                      
 ---
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 282 observations deleted due to missingness
 > runtimes = read.csv("b40-l.csv")
 > ncount=factor(runtimes[,3])
 > method=factor(runtimes[,4])
+> seed=factor(runtimes[,1])
+> gridsize=factor(runtimes[,2])
 > y=runtimes[,6]
-> summary(aov(y~ncount*method))
-                Df   Sum Sq Mean Sq F value Pr(>F)    
-ncount           6   600648  100108   18.30 <2e-16 ***
-method           2  4125857 2062929  377.02 <2e-16 ***
-ncount:method    8  1092633  136579   24.96 <2e-16 ***
-Residuals     2226 12180015    5472                   
+> summary(aov(y~ncount+method+ncount:method+seed+gridsize))
+                Df   Sum Sq Mean Sq F value   Pr(>F)    
+ncount           6   600648  100108  19.599  < 2e-16 ***
+method           2  4125857 2062929 403.881  < 2e-16 ***
+seed            99  1239976   12525   2.452 4.47e-13 ***
+gridsize         2   123520   61760  12.091 6.00e-06 ***
+ncount:method    8  1055150  131894  25.822  < 2e-16 ***
+Residuals     2125 10854001    5108                     
 ---
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+Signif. codes:  
+0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 781 observations deleted due to missingness
 > runtimes = read.csv("b40.csv")
 > dim(runtimes)
