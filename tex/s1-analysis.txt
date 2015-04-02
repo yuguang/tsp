@@ -3,7 +3,7 @@
 > method=factor(runtimes[,4])
 > seed=factor(runtimes[,1])
 > gridsize=factor(runtimes[,2])
-> y=runtimes[,6]
+> y=runtimes[,5]
 > summary(aov(y~ncount+method+ncount:method+seed+gridsize))
                  Df  Sum Sq Mean Sq F value   Pr(>F)    
 ncount           14 1147993   82000 197.559  < 2e-16 ***
@@ -21,7 +21,7 @@ Signif. codes:
 > method=factor(runtimes[,4])
 > seed=factor(runtimes[,1])
 > gridsize=factor(runtimes[,2])
-> y=runtimes[,6]
+> y=runtimes[,5]
 > summary(aov(y~ncount+method+ncount:method+seed+gridsize))
                 Df  Sum Sq Mean Sq F value   Pr(>F)    
 ncount           5  322445   64489  87.530  < 2e-16 ***
@@ -39,7 +39,7 @@ Signif. codes:
 > method=factor(runtimes[,4])
 > seed=factor(runtimes[,1])
 > gridsize=factor(runtimes[,2])
-> y=runtimes[,6]
+> y=runtimes[,5]
 > summary(aov(y~ncount+method+ncount:method+seed+gridsize))
                 Df  Sum Sq Mean Sq F value   Pr(>F)    
 ncount           6   99698   16616   3.879 0.000743 ***
