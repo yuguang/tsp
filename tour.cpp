@@ -127,7 +127,7 @@ int main (int ac, char **av)
         case 2:
             bestlen = nntour(ncount,ecount,elist,elen,tlist);
             printf ("Nearest neighbor tour: %d\n", bestlen);
-            one_tree_tsp(ncount,ecount,elist,elen,bestlen);
+            best_len = one_tree_tsp(ncount,ecount,elist,elen,bestlen);
             break;
         case 3: {
                 bhk* bhk_solver = new bhk();

@@ -1,8 +1,6 @@
 #ifndef bhk2_H
 #define bhk2_H
 
-#include <map>
-
 // This class implements the Bellman-Held-Karp algorithm
 // Code is mostly copied from the dynamic programming chaper
 class bhk2 {
