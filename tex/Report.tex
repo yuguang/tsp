@@ -6,6 +6,7 @@
 \usepackage{algpseudocode}
 \usepackage{algorithmicx}
 \usepackage{listings}
+\usepackage{multirow}
 \usepackage{hyperref}
 \usepackage{fancyhdr}
 \usepackage{framed}
@@ -132,12 +133,11 @@
 	
 	We made a few improvements from the code we submitted for homework 2. The first was branching on the \emph{1-side} before the \emph{0-side}, when including/excluding edges in the LP formulation. Secondly, we improved our nearest neighbour tour upper bound by computing the nearest neighbour tour leaving from each node. This change actually affects all the methods which used pruning. 
 	
-	\section{Testing Environment}
-	\label{sec:environment}
-	
-	\section{Test Data}
+	\section{Problem Instances and Methods}
+	\label{sec:methodology}
+		
+	\subsection{Problems Instances}
 	\label{sec:data}
-	
 	In order to compare the algorithms, we need to test them on travelling salesman problems of varying sizes. This section describes the properties of the problems that we used for testing. We implemented two ways of generating problems, but due to time constraints we only analyzed one of them.
 	
 	A few properties were common to all test problems. Firstly, all the problems were symmetric. This means that if $dist(a,b)$ is the distance from city $a$ to city $b$, then we have $dist(a,b) = dist(b,a)$. Secondly, all edge lengths were positive integers. This ensured that the algorithms would not be affected by floating point errors. Finally, all test problems were complete graphs, meaning there exists an edge between every pair of cities.
@@ -148,6 +148,65 @@
 	
 	Command line flags are provided to run these different problem-generating methods in our program. To run the first method, use the \texttt{-k} and \texttt{-b} flags to specify the number of cities and the grid size respectively. To run the second method (random edge lengths), use \texttt{-e} and \texttt{-l} to specify the number of cities and the maximum edge length respectively.
 	
+	\subsection{Experiment Design and Setup}
+	For our experiment, there were two treatment factors and two blocking factors. We measured the effect of these factors on the response, which is the run time. The treatment factors, which are factors of interest, are the number of cities and the methods used. Although the grid size and random seed also have an effect on the execution time, they are not factors of interest. We perform blocking to estimate the effect of these blocks and remove  the effects of blocks on the response. For the grid sizes of 100, 1000, and 5000 we have a trial for each combination of the levels for our two treatment factors. For further blocking, we apply the same random seed to all methods with the same number of cities and grid size. 
+	
+	To gather experimental data of the execution times of our algorithms on these test instances, we used DataMill \cite{Datamill}. Datamill is an infrastructure for performance evaluation and has a cluster of computers for running benchmarks. We selected two machines for our experiment. Machine 1 has an Intel Core i5-2500 CPU with 8GB of RAM. Machine 2 has an AMD Opteron 8378 Processor with 32GB of RAM. Due to time constraints, experiments were run on all CPU cores with one process for each core. The code is compiled with GCC 4.7.3 using optimization flag \texttt{-O2}. Because most of our algorithms are known to have exponential worst case running times, we set a time limit of 10 minutes for all our test runs. For each combination of the two treatment factors, 144 trials were executed on both machines with 100 random seeds and 3 grid sizes. 
+	
+	\section{Results}
+	To analyze the results, the data is separated by number of cities. Data gathered for instance sizes of 5 to 19, 20 to 25, and 26 to 32 were partitioned into separate files for each machine. This  produces better analysis of the effect of factors on run times. Methods that time out at a certain size are ignored, as missing data can result in biased ANOVA analysis. 
+	
+	The experimental results Table~\ref{tab:runtime_small_anova} show that for small instances, different grid sizes have the same effect on the run time. This is indicated by a p-value much less than 95\%. Thus, changing grid sizes for small instances has an uncertain effect on execution time. However, other factors all have a significant effect on execution time with a confidence interval greater than 99\%. The same trend continues with instance size, method, and seed on instances of 20 to 25 cities in Table~\ref{tab:runtime_medium_anova}, with the grid size showing a significant effect on execution time. 
+\begin{table}
+	\centering
+	\begin{tabular}{r|r|rr}
+		Machine & Factor & F value & p-value  \\
+		\hline
+		\hline
+		\multirow{4}{*}{1} 
+		& Instance size             & 197.559 & \textless 2e-16 \\
+		& Method             & 733.567 & \textless 2e-16 \\
+		\cline{2-4}
+		& Seed            & 2.523 & 8.13e-15 \\
+		& Grid size & 0.256 & 0.774 \\
+		\hline
+		\multirow{4}{*}{2}
+		& Instance size             & 198.096 & \textless 2e-16 \\
+		& Method             & 664.248 & \textless 2e-16 \\
+		\cline{2-4}
+		& Seed            & 2.146 & 3.76e-10 \\
+		& Grid size & 1.331 & 0.264 \\
+	\end{tabular}
+	\caption{Reduced ANOVA table for execution times on two machines for all six methods on instances of less than 20 cities}
+	\label{tab:runtime_small_anova}
+\end{table}
+	
+\begin{table}
+	\centering
+	\begin{tabular}{r|r|rr}
+		Machine & Factor & F value & p-value  \\
+		\hline
+		\hline
+		\multirow{4}{*}{1} 
+		& Instance size             & 87.530 & \textless 2e-16 \\
+		& Method             & 385.404 & \textless 2e-16 \\
+		\cline{2-4}
+		& Seed            & 2.119 & 1.33e-09 \\
+		& Grid size & 10.686 & 2.35e-05 \\
+		\hline
+		\multirow{4}{*}{2}
+		& Instance size             & 382.141 & \textless 2e-16 \\
+		& Method             & 1203.730 & \textless 2e-16 \\
+		\cline{2-4}
+		& Seed            &  1.892 & 3.45e-07\\
+		& Grid size & 22.767 & 1.48e-10 \\
+	\end{tabular}
+	\caption{Reduced ANOVA table for execution times on two machines for all six methods except enumeration on instances of 20 to 25 cities}
+	\label{tab:runtime_medium_anova}
+\end{table}
+	
+	
+	
 	\section{Discussion}
 	\label{sec:discussion}
 	We first consider Figures 1 and 2 which show the mean running times of our various algorithms on a log scale. From these plots we can see some clear thresholds on which algorithms perform better. Firstly we see that on problem instances up to and including 6 cities, the enumeration algorithm is the fastest.
@@ -156,18 +215,18 @@
 	
 	The 1-Tree algorithm is notably lacking here. We can see that it trend in runtime is similar to that of the dynamic programming algorithm, but consistently slower.
 	
-	%Observation from ANOVA tables: for smaller node counts, the grid size has a more variable effect on run time, indicated by the small p-value. 
-	
 	\begin{figure}[H]
 		\center
 		\includegraphics[width=0.8\textwidth]{s1-log}
-		\caption{Mean running times of various algorithms on different sized geometric TSP problems. Computed on Server-1 machine.}
+		\caption{Mean running times of various algorithms on different sized geometric TSP problems. Computed on machine 1.}
+		\label{fig:m1-runtime}
 	\end{figure}
 	
 	\begin{figure}[H]
 		\center
 		\includegraphics[width=0.8\textwidth]{b40-log}
-		\caption{Mean running times of various algorithms on different sized geometric TSP problems. Computed on Benchmark-40 machine.}
+		\caption{Mean running times of various algorithms on different sized geometric TSP problems. Computed on machine 2.}
+		\label{fig:m2-runtime}
 	\end{figure}
 	
 	We now consider some performance plots at meaningful city sizes to further illustrate the regimes we have found.
