@@ -61,12 +61,13 @@
 	
 	Many algorithms have been developed for the travelling salesman problem. Asymptotic behaviour can be analysed for these methods, but methods that are superior asymptotically may turn out to be slower for small problems due to large overhead costs. For example, enumerating all possible tours may take $O(n!)$ operations, but for a problem with only $n=5$ cities, could this be faster than the $O(n^2 2^n)$ Bellman-Held-Karp algorithm? This project explores such questions by implementing a few common algorithms for the travelling salesman problem, then comparing their run time for problems of varying sizes and types.
 	
-	Section \ref{sec:methods} outlines the algorithms that were implemented for this project, including some implementation details and optimizations. Section \ref{sec:environment} describes the environment in which we tested the algorithms. Section \ref{sec:data} describes the types of problems we ran the algorithms over. Section \ref{sec:discussion} discusses the results. Finally, Section \ref{sec:conclusions} summarizes the project. The raw timing data as well as our code are contained in the appendix.
+	Section \ref{sec:methods} outlines the algorithms that were implemented for this project, including some implementation details and optimizations. Section \ref{sec:data} describes the types of problems we ran the algorithms over. Section \ref{sec:environment} describes the environment in which we tested the algorithms. Section \ref{sec:discussion} discusses the results. Finally, Section \ref{sec:conclusions} summarizes the project. The raw timing data as well as our code are contained in the appendix.
 	
 	\section{Methods}
 	\label{sec:methods}
-	
+	For our project, we implemented several methods for solving the TSP. They are enumeration with pruning, Held-Karp 1-trees, Bellman-Held-Karp dynamic programming, and subtour branch and cut. Bellman-Held-Karp dynamic programming has the best proven worst case run time for solving the TSP. 
 	\subsection{Enumeration}
+	The enumeration method for solving the TSP generates all possible tours and iterates through them. To save time, two simple optimizations are implemented in our version. First, if the tour length is greater than the best known tour, the search is pruned. Second, instead of computing the tour length by adding up the edges at the base case of recursive calls, the recursive calls keep track of the tour length. 
 	
 	\subsection{Held-Karp 1-Trees}
 	
@@ -149,15 +150,13 @@
 	Command line flags are provided to run these different problem-generating methods in our program. To run the first method, use the \texttt{-k} and \texttt{-b} flags to specify the number of cities and the grid size respectively. To run the second method (random edge lengths), use \texttt{-e} and \texttt{-l} to specify the number of cities and the maximum edge length respectively.
 	
 	\subsection{Experiment Design and Setup}
+	\label{sec:environment}
 	For our experiment, there were two treatment factors and two blocking factors. We measured the effect of these factors on the response, which is the run time. The treatment factors, which are factors of interest, are the number of cities and the methods used. Although the grid size and random seed also have an effect on the execution time, they are not factors of interest. We perform blocking to estimate the effect of these blocks and remove  the effects of blocks on the response. For the grid sizes of 100, 1000, and 5000 we have a trial for each combination of the levels for our two treatment factors. For further blocking, we apply the same random seed to all methods with the same number of cities and grid size. 
 	
-	To gather experimental data of the execution times of our algorithms on these test instances, we used DataMill \cite{Datamill}. Datamill is an infrastructure for performance evaluation and has a cluster of computers for running benchmarks. We selected two machines for our experiment. Machine 1 has an Intel Core i5-2500 CPU with 8GB of RAM. Machine 2 has an AMD Opteron 8378 Processor with 32GB of RAM. Due to time constraints, experiments were run on all CPU cores with one process for each core. The code is compiled with GCC 4.7.3 using optimization flag \texttt{-O2}. Because most of our algorithms are known to have exponential worst case running times, we set a time limit of 10 minutes for all our test runs. For each combination of the two treatment factors, 144 trials were executed on both machines with 100 random seeds and 3 grid sizes. 
+	To gather experimental data of the execution times of our algorithms on these test instances, we used DataMill. Datamill is an infrastructure for performance evaluation and has a cluster of computers for running benchmarks. We selected two machines for our experiment. Machine 1 has an Intel Core i5-2500 CPU with 8GB of RAM. Machine 2 has an AMD Opteron 8378 Processor with 32GB of RAM. Due to time constraints, experiments were run on all CPU cores with one process for each core. The code is compiled with GCC 4.7.3 using optimization flag \texttt{-O2}. Because most of our algorithms are known to have exponential worst case running times, we set a time limit of 10 minutes for all our test runs. For each combination of the two treatment factors, 144 trials were executed on both machines with a total of 3 grid sizes. 
 	
 	\section{Results}
-	To analyze the results, the data is separated by number of cities. Data gathered for instance sizes of 5 to 19, 20 to 25, and 26 to 32 were partitioned into separate files for each machine. This  produces better analysis of the effect of factors on run times. Methods that time out at a certain size are ignored, as missing data can result in biased ANOVA analysis. 
-	
-	The experimental results Table~\ref{tab:runtime_small_anova} show that for small instances, different grid sizes have the same effect on the run time. This is indicated by a p-value much less than 95\%. Thus, changing grid sizes for small instances has an uncertain effect on execution time. However, other factors all have a significant effect on execution time with a confidence interval greater than 99\%. The same trend continues with instance size, method, and seed on instances of 20 to 25 cities in Table~\ref{tab:runtime_medium_anova}, with the grid size showing a significant effect on execution time. 
-\begin{table}
+	\begin{table}
 	\centering
 	\begin{tabular}{r|r|rr}
 		Machine & Factor & F value & p-value  \\
@@ -204,16 +203,27 @@
 	\caption{Reduced ANOVA table for execution times on two machines for all six methods except enumeration on instances of 20 to 25 cities}
 	\label{tab:runtime_medium_anova}
 \end{table}
+	To analyze the results, the data is separated by number of cities. Data gathered for instance sizes of 5 to 19, 20 to 25, and 26 to 32 were partitioned into separate files for each machine. This  produces better analysis of the effect of factors on run times. Methods that time out at a certain size are ignored, as missing data can result in biased ANOVA analysis. 
+	
+	The experimental results Table~\ref{tab:runtime_small_anova} show that for small instances, different grid sizes have the same effect on the run time. This is indicated by a p-value much less than 95\%. Thus, changing grid sizes for small instances has an uncertain effect on execution time. However, other factors all have a significant effect on execution time with a confidence interval greater than 99\%. The same trend continues with instance size, method, and seed on instances of 20 to 25 cities in Table~\ref{tab:runtime_medium_anova}, with the grid size showing a significant effect on execution time. 
+
 	
 	
 	
 	\section{Discussion}
 	\label{sec:discussion}
-	We first consider Figures 1 and 2 which show the mean running times of our various algorithms on a log scale. From these plots we can see some clear thresholds on which algorithms perform better. Firstly we see that on problem instances up to and including 6 cities, the enumeration algorithm is the fastest.
+	We first consider Figures 1 and 2 which show the mean running times of our various algorithms on a log scale. The methods are 
+	\begin{enumerate}
+ \item enumeration
+ \item Held-Karp 1-tree
+ \item Bellman-Held-Karp
+ \item Branch and bound
+ \item BHK recursive
+ \item BHK non-recursive
+\end{enumerate}
+From these plots we can see some clear thresholds on which algorithms perform better. Firstly we see that on problem instances up to and including 6 cities, the enumeration algorithm is the fastest.
 	
-	For bigger than 6 city problems we can see that the BHK dynamic programming algorithm performs better up until 14 cities. From 15 to 20 city problems we can see that either BHK or the Branch-Cut algorithm is superior depending on the test instances. From 21 cities onward we see that the Branch-Cut algorithm dominates all other algorithms
-	
-	The 1-Tree algorithm is notably lacking here. We can see that it trend in runtime is similar to that of the dynamic programming algorithm, but consistently slower.
+	For bigger than 6 city problems we can see that the BHK dynamic programming algorithm performs better up until 14 cities. From 15 to 20 city problems we can see that either BHK or the Branch-Cut algorithm is superior depending on the test instances. From 21 cities onward we see that the Branch-Cut algorithm dominates all other algorithms. The 1-Tree algorithm is notably lacking here. We can see that its trend in run time is similar to that of the dynamic programming algorithm, but consistently slower.
 	
 	\begin{figure}[H]
 		\center
@@ -229,8 +239,32 @@
 		\label{fig:m2-runtime}
 	\end{figure}
 	
-	We now consider some performance plots at meaningful city sizes to further illustrate the regimes we have found.
+	Figure~\ref{fig:perf-5} shows that for n=5, enumeration has the most wins and the probability that it is the best algorithm is about .95. Branch and cut is within a factor 1000 of the best algorithm, and BHK is about a factor 3 of the best algorithm. The 1-Tree algorithm solves 70\% of the problems in a factor of 1000 of the best algorithm. 
+
+	\begin{figure}[H]
+		\center
+		\includegraphics[width=0.95\textwidth]{../performanceplots/perf5.png}
+		\caption{Performance profiles of algorithms on instances of size 5.}
+		\label{fig:perf-5}
+	\end{figure}
 	
+	Figure~\ref{fig:perf-10} shows that for n=10, enumeration and branch and cut are on par solving within a factor 200 of the best algorithm. However, BHK dynamic programming is the overall winner. 
+		
+	\begin{figure}[H]
+		\center
+		\includegraphics[width=0.95\textwidth]{../performanceplots/perf10.png}
+		\caption{Performance profiles of algorithms on instances of size 10.}
+		\label{fig:perf-10}
+	\end{figure}
+	
+	Finally, for n=15 branch and cut becomes the best algorithm, solving 90\% of problems with the greatest efficiency. BHK dynamic programming is a factor of 2 slower than the best for 90\% of the problems as show in Figure~\ref{fig:perf-15}. 
+	
+	\begin{figure}[H]
+		\center
+		\includegraphics[width=0.95\textwidth]{../performanceplots/perf15.png}
+		\caption{Performance profiles of algorithms on instances of size 15.}
+		\label{fig:perf-15}
+	\end{figure}
 	\section{Conclusions}
 	\label{sec:conclusions}
 	
