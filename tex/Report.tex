@@ -74,26 +74,26 @@
 	
 	\subsection{Held-Karp 1-Trees}
 	
-	In a pair of articles published in 1970 and 1971 \cite{OneTree70,OneTree71} Michael Held and Richard Karp proposed a method for constructing lower bounds for the traveling-salesman problem based on \emph{1-Trees}, and an accompanying ascent algorithm for solving the TSP.
+	In a pair of articles published in 1970 and 1971 \cite{OneTree70,OneTree71} Michael Held and Richard Karp proposed a method for constructing lower bounds for the traveling-salesman problem using \emph{1-Trees}. They described an ascent algorithm using these lower bounds which we have implemented.
 	
-	If a graph $G$ has nodes labelled $1, 2, \dots, n$, then a 1-tree of the graph is formed by taking the node set and a subset of the edges such that the edges incident only with nodes $2, 3, \dots n$ form a tree, and there are 2 edges incident with node 1. We can see that with this definition, a tour of the graph is  a 1-tree.
+	If a graph $G$ has nodes labelled $1, 2, \dots, n$, then a 1-tree of the graph is formed by taking the node set and a subset of the edges such that the edges incident only with nodes $2, 3, \dots n$ form a tree, with 2 additional edges incident with node 1. We can see that with this definition, a tour of the graph is a 1-tree.
 	
-	While the TSP problem looks for a tour of minimum cost, we can similarly define the notion of a 1-tree of minimum cost (the 1-tree need not be rooted at node $1$). The core of Held and Karp's algorithm comes from the realization of what happens to the minimum cost tour and the minimum cost 1-tree when we alter the costs of the edges in the graph in a particular way.
+	While the TSP problem looks for a tour of minimum cost, we can similarly define the notion of a 1-tree of minimum cost (for this purpose the 1-tree need not be rooted at node $1$). The core of Held and Karp's algorithm comes from the realization of what happens to the minimum cost tour and the minimum cost 1-tree when we alter the costs of the edges in the graph in a particular way.
 	
 	Consider a vector $\ve{\pi} = (\pi_1, \pi_2, \dots, \pi_n)$. We consider what would happen if we update the costs of the edges $c_{i,j}$ as follows:
 	$$ c_{i,j} \leftarrow c_{i,j} + \pi_i + \pi_j $$
 	
-	We note that since each node must have degree two in the optimal tour, this modification of the edge weights changes the optimal tour cost by $2 \sum\limits_i^n \pi_i$, but does not change the tour itself. The minimum cost 1-tree however is not guaranteed to remain the same on the modified graph.
+	We note that since each node must have degree two in any tour, this modification of the edge weights changes the optimal tour cost by $2 \sum\limits_i^n \pi_i$, but does not change the tour itself. The minimum cost 1-tree however is not guaranteed to remain the same on the modified graph.
 	
 	Held and Karp showed that from these minimum cost 1-trees we can produce lower bounds for the TSP of the from:
-	\[ C^* \geq \sum\limits_{(i,j) \in K^*} c_{i,j} + \sum\limits_i (2 - d_i)\pi_i = w(\ve{\pi}) \]
-	Where $K^*$ is the minimum cost 1-Tree defined on the graph modified by $\ve{\pi}$ and $d_i$ is the degree of node $i$ in that 1-Tree. 
+	\[ C^* \geq \sum\limits_{(i,j) \in K^*(\ve{\pi})} c_{i,j} + \sum\limits_i (2 - d_i)\pi_i = w(\ve{\pi}) \]
+	Where $ K^*(\ve{\pi})$ is the minimum cost 1-Tree defined on the graph with edges wieghts modified by $\ve{\pi}$ and $d_i$ is the degree of node $i$ in this 1-Tree. 
 	
 	We note that because $\ve{\pi}$ defines a minimum cost 1-tree, we can consider our lower bounds on $C^*$ - the cost of the optimal tour - as simply a function of $\ve{\pi}$, namely $w(\ve{\pi})$. By modifying $\ve{\pi}$ the ascent algorithm attempts to produce minimum cost 1-trees that look more and more like tours, increasing the lower bound until the optimal tour is found.
 	
-	The algorithm we implemented consists of three main components. The first is the computation of the minimum cost 1-trees. This is a fairly simple process which involves computing a minimum spanning tree on all but one node and then adding that node's two cheapest edges to the MST to produce a 1-tree. By repeating this process on each node, one of the 1-trees generated is guaranteed to be of minimum cost. The second component is a simple iterative algorithm to modify $\ve{\pi}$. This is done by increasing and decreasing respectively the nodes in the 1-tree which have more or less than degree 2. The last component is a branching method. We used the technique used in homework 2 of forcing a particular edge into or out of the 1-trees. We kept our branching nodes in a priority queue so that as soon as we pop a 1-tree from our queue that is a tour, we know it is the optimal one.
+	The algorithm we implemented consists of three main components. The first is the computation of the minimum cost 1-trees. This is a fairly simple process which involves computing a minimum spanning tree on all but one node and then adding that node's two cheapest edges to the MST to produce a 1-tree. By repeating this process on each node, one of the 1-trees generated is guaranteed to be of minimum cost. The second component is a simple iterative algorithm to modify $\ve{\pi}$. This is done by increasing and decreasing $\pi_i$ for nodes $i$ in the 1-tree which have more or less than degree 2 respectively. The last component is a branching method. We used the technique used in homework 2 of forcing a particular edge into or out of the 1-trees. We kept our branching nodes in a priority queue so that as soon as we pop a 1-tree from our queue, and that is a tour, we know it is the optimal tour.
 	
-	Over the development of the 1-tree algorithm, many optimizations were made. Many were programming details, but I've outlined a few more significant changes that together greatly increased performance. Firstly, we modified our Kruskal code from homework 1 to work on the subsets of our graph, instead of building a subgraph every time we wanted to build an MST. Another optimization was to sort all the edges of the modified graph (modified weights) only once. In this way we can choose the two edges incident to our \emph{ignored} node during our modified Kruskal's algorithm, and not need to re-sort when we consider the next node to ignore. Since we are branching on the smallest lower bound in our priority queue, we cannot declare a tour we've found optimal until it has been popped from the queue. We can however update our upper bound on the tour cost. This helps with the pruning that occurs during the $\ve{\pi}$ iterations. Lastly, a seemingly minor change was to update our maximum lower bound seen in the iterations of $\ve{\pi}$ when the bound was greater than \emph{or equal} to our current max. Intuitively this makes sense because the iterations strive to produce 1-trees more resembling tours, so even if the bound itself is not changing, the 1-tree producing that bound is hopefully more tour-like.
+	Over the development of the 1-tree algorithm, several optimizations were made. Many were programming details, but outlined here are a few more significant changes that together greatly increased performance. Firstly, we modified the Kruskal code developed for homework 1 to work on the subsets of our edge set, instead of building a subgraph every time we wanted to build an MST. Another optimization was to sort all the edges of the modified graph (modified weights) only once. In this way we can choose the two edges incident to our \emph{ignored} node during our modified Kruskal's algorithm, and not need to re-sort when we consider the next node to ignore. Since we are branching on the smallest lower bound in our priority queue, we cannot declare a tour we've found optimal until it has been popped from the queue. We can however update our upper bound on the tour cost. This helps with the pruning that occurs during the $\ve{\pi}$ iterations. Lastly, a seemingly minor change was to update our maximum lower bound seen in the iterations of $\ve{\pi}$ when the bound was greater than \emph{or equal} to our current maximum. Intuitively this makes sense because the iterations strive to produce 1-trees more resembling tours, so even if the bound itself is not increasing, we switch anyway  because the 1-tree is hopefully more tour-like.
 	
 	\subsection{Bellman-Held-Karp Dynamic Programming}
 	
@@ -133,9 +133,9 @@
 	
 	\subsection{Subtour Branch and Cut}
 	
-	The code we used for Branch and Cut was the code developed for homework 2, based on the board work and sample code seen in lectures. In particular, it used subtour inequalities generated by finding disconnected components on the support graph generated from fractional LP solutions.
+	The code we used for branch and cut was the code developed for homework 2, based on the board work and sample code seen in lectures. In particular, it uses subtour inequalities generated by finding disconnected components on the support graph generated from fractional LP solutions.
 	
-	We made a few improvements from the code we submitted for homework 2. The first was branching on the \emph{1-side} before the \emph{0-side} when including/excluding edges in the LP formulation. Secondly, we improved our nearest neighbour tour upper bound by computing the nearest neighbour tour for every possible start node then taking the minimum. This change improved all methods which used pruning. 
+	We made a few improvements from the code we submitted for homework 2. The first was branching on the \emph{1-side} (force an edge to be included) before the \emph{0-side} (forcing an edge to be excluded) in the branching procedure. Secondly, we improved our nearest neighbour tour initial upper bound by computing the nearest neighbour tour for every possible start node then taking the minimum of those. This change improved all methods which used pruning. 
 	
 	\section{Problem Instances and Methods}
 	\label{sec:methodology}
@@ -216,18 +216,16 @@
 	
 	\section{Discussion}
 	\label{sec:discussion}
-	We first consider Figures 1 and 2 which show the mean running times of our various algorithms on a log scale. The methods are 
+	We first consider Figures~\ref{fig:m1-runtime} and~\ref{fig:m2-runtime} which show the mean running times of our various algorithms on a log scale. The methods are 
 	\begin{enumerate}
- \item enumeration
+ \item Enumeration
  \item Held-Karp 1-tree
  \item Bellman-Held-Karp
  \item Branch and bound
  \item BHK recursive
  \item BHK non-recursive
 \end{enumerate}
-From these plots we can see some clear thresholds on which algorithms perform better. Firstly we see that on problem instances up to and including 6 cities, the enumeration algorithm is the fastest.
-	
-	For bigger than 6 city problems we can see that the BHK dynamic programming algorithm performs better up until 14 cities. From 15 to 20 city problems we can see that either BHK or the Branch-Cut algorithm is superior depending on the test instances. From 21 cities onward we see that the Branch-Cut algorithm dominates all other algorithms. The 1-Tree algorithm is notably lacking here. We can see that its trend in run time is similar to that of the dynamic programming algorithm, but consistently slower.
+From these plots we can see some clear thresholds on which one algorithm performs better than the others. Firstly we see that on problem instances up to and including 6 cities, the enumeration algorithm is the fastest. This is an encouraging result because it illustrates that a asymptotically slow algorithm can be faster on small problems because of a lower overhead. For bigger than 6 city problems we can see that the BHK dynamic programming algorithm performs better up until 14 cities. From 15 to 20 city problems we can see that either BHK or the Branch-Cut algorithm is superior depending on the test instances. From 21 cities onward we see that the Branch-Cut algorithm dominates all other algorithms. The 1-Tree algorithm is notably lacking here. We can see that its trend in run time is similar to those of the dynamic programming algorithms, but it is consistently slower and hence never appears as the fastest algorithm.
 	
 	\begin{figure}[H]
 		\center
@@ -286,6 +284,9 @@ From these plots we can see some clear thresholds on which algorithms perform be
 	
 	\section*{Appendix}
 	\subsection*{Result Tables}
+
+	Results for the benchmark-40 and server-1 machines are in \texttt{b40.csv} and \texttt{s1.csv} files respectively.	
+	
 	\subsection*{Code}
 	Relevant code files are as follows:
 	
