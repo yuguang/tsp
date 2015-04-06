@@ -12,8 +12,9 @@ int main (int ac, char **av)
 
   // Tests 1-2: An unconnected graph
   int elist1[] = {0,1, 0,2, 1,2};
+  int elen1[] = {1,1,1};
   double x1[] = {0.0, 1.0, 0.0};
-  g->init(x1, 3, 3, elist1);
+  g->init(x1, 3, 3, elist1, elen1);
   printf("Test 1: ");
   if (not g->is_connected()) {
     printf("PASSED\n");
@@ -37,8 +38,9 @@ int main (int ac, char **av)
 
   // Tests 3-4: A connected graph
   int elist3[] = {0,1, 0,2, 1,2};
+  int elen3[] = {1,1,1};
   double x3[] = {1.0, 1.0, 0.0};
-  g->init(x3, 3, 3, elist3);
+  g->init(x3, 3, 3, elist3, elen3);
   printf("Test 3: ");
   if (g->is_connected()) {
     printf("PASSED\n");
@@ -60,8 +62,9 @@ int main (int ac, char **av)
 
   // Tests 5-6: Test delta function
   int elist5[] = {0,1, 0,2, 0,3, 1,2, 1,3, 2,3};
+  int elen5[] = {1,1,1,1,1,1};
   double x5[] = {1.0, 1.0, 0.0};
-  g->init(x5, 4, 6, elist5);
+  g->init(x5, 4, 6, elist5, elen5);
   std::vector<int> s5;
   s5.push_back(0);
   s5.push_back(1);
