@@ -61,7 +61,7 @@
 	
 	Many algorithms have been developed for the travelling salesman problem. Asymptotic behaviour can be analysed for these methods, but methods that are superior asymptotically may turn out to be slower for small problems due to large overhead costs. For example, enumerating all possible tours may take $O(n!)$ operations, but for a problem with only $n=5$ cities, could this be faster than the $O(n^2 2^n)$ Bellman-Held-Karp algorithm? This project explores such questions by implementing a few common algorithms for the travelling salesman problem, then comparing their run time for problems of varying sizes and types.
 	
-	Section \ref{sec:methods} outlines the algorithms that were implemented for this project, including some implementation details and optimizations. Section \ref{sec:data} describes the types of problems we ran the algorithms over. Section \ref{sec:environment} describes the environment in which we tested the algorithms. Sections \ref{sec:results} and \ref{sec:discussion} present and discuss the results. Section \ref{sec:future} discusses some future work. Finally, Section \ref{sec:conclusions} summarizes the project. The raw timing data as well as our code are contained in the appendix.
+	Section \ref{sec:methods} outlines the algorithms that were implemented for this project, including some implementation details and optimizations. Section \ref{sec:data} describes the types of problems we ran the algorithms over. Section \ref{sec:environment} describes the environment in which we tested the algorithms. Sections \ref{sec:results} and \ref{sec:discussion} present and discuss the results. Section \ref{sec:future} discusses some future work. Finally, Section \ref{sec:conclusions} summarizes the project. The files to look at to find the raw timing data as well as our code are described in the appendix.
 	
 	\section{Methods}
 	\label{sec:methods}
@@ -285,16 +285,21 @@ From these plots we can see some clear thresholds on which one algorithm perform
 	\section*{Appendix}
 	\subsection*{Result Tables}
 
-	Results for the benchmark-40 and server-1 machines are in \texttt{b40.csv} and \texttt{s1.csv} files respectively.	
+	Results for the benchmark-40 and server-1 machines are in \texttt{b40.csv} and \texttt{s1.csv} respectively.	
 	
 	\subsection*{Code}
 	Relevant code files are as follows:
 	
 	\begin{itemize}
-		\item Main program driver, Nearest-Neighbour, Branch-Cut code: \texttt{tour.cpp}
+		\item Main program driver, Nearest-Neighbour, Branch-Cut: \texttt{tour.cpp}
+		\item Problem generation: \texttt{tour.cpp, util.c}
 		\item Graph constructs: \texttt{graph.cpp, edge.cpp, tnode.cpp}
 		\item 1-Tree Code: \texttt{onetree.cpp}
-		\item BHK Dynamic Programming: \texttt{bhk1.cpp, bhk2.cpp, bhk3.cpp}
+		\item BHK Dynamic Programming:
+		\begin{itemize}
+			\item Implementations: \texttt{bhk.cpp, bhk2.cpp, bhk3.cpp}
+			\item Unit tests: \texttt{test{\textunderscore}tour.cpp}
+		\end{itemize}
 		\item Datamill scripts: \texttt{collect.sh, run.sh, setup.sh, tour.sh}
 	\end{itemize}
 	
