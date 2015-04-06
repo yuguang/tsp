@@ -67,7 +67,9 @@
 	\label{sec:methods}
 	For our project, we implemented several methods for solving the TSP. They are enumeration with pruning, Held-Karp 1-trees, Bellman-Held-Karp dynamic programming, and subtour branch and cut. Bellman-Held-Karp dynamic programming has the best proven worst case run time for solving the TSP. 
 	\subsection{Enumeration}
-	The enumeration method for solving the TSP generates all possible tours and iterates through them. To save time, two simple optimizations are implemented in our version. First, if the tour length is greater than the best known tour, the search is pruned. Second, instead of computing the tour length by adding up the edges at the base case of recursive calls, the recursive calls keep track of the tour length. 
+	The enumeration method for solving the TSP generates all possible tours and iterates through them. The possible tours are generated through a recursive call that swaps the positions of cities in the tour. In each recursive call, the number of cities to permute is reduced by one. When there are no more cities to permute, the recursive function compares the current tour length against the best one found, saving it if it is better than the previous value. 
+	
+	To save time, three simple optimizations are implemented in our version. First, if the tour length is greater than the best known tour, the search path is pruned. Second, instead of computing the tour length by adding up the edges at the base case of recursive calls, the recursive calls keep track of the tour length. Third, a macro is used to swap cities in the tour saving two function calls before and after permuting the order of cities. These simple optimizations give this $O(n!)$ algorithm better performance than more sophisticated algorithms on the smallest instances \cite{bico-1}. 
 	
 	\subsection{Held-Karp 1-Trees}
 	
@@ -239,11 +241,11 @@ From these plots we can see some clear thresholds on which algorithms perform be
 		\label{fig:m2-runtime}
 	\end{figure}
 	
-	Figure~\ref{fig:perf-5} shows that for n=5, enumeration has the most wins and the probability that it is the best algorithm is about .95. Branch and cut is within a factor 1000 of the best algorithm, and BHK is about a factor 3 of the best algorithm. The 1-Tree algorithm solves 70\% of the problems in a factor of 1000 of the best algorithm. 
+	Figure~\ref{fig:perf-5} shows that for n=5, enumeration has the most wins. It is always the best algorithm. Branch and cut is within a factor 1000 of the best algorithm, and BHK is about a factor 3 of the best algorithm. The 1-Tree algorithm solves 70\% of the problems in a factor of 1000 of the best algorithm. 
 
 	\begin{figure}[H]
 		\center
-		\includegraphics[width=0.95\textwidth]{../performanceplots/perf5.png}
+		\includegraphics[width=0.95\textwidth]{../performanceplots/perf5_norm.png}
 		\caption{Performance profiles of algorithms on instances of size 5.}
 		\label{fig:perf-5}
 	\end{figure}
@@ -252,21 +254,27 @@ From these plots we can see some clear thresholds on which algorithms perform be
 		
 	\begin{figure}[H]
 		\center
-		\includegraphics[width=0.95\textwidth]{../performanceplots/perf10.png}
+		\includegraphics[width=0.95\textwidth]{../performanceplots/perf10_norm.png}
 		\caption{Performance profiles of algorithms on instances of size 10.}
 		\label{fig:perf-10}
 	\end{figure}
 	
-	Finally, for n=15 branch and cut becomes the best algorithm, solving 90\% of problems with the greatest efficiency. BHK dynamic programming is a factor of 2 slower than the best for 90\% of the problems as show in Figure~\ref{fig:perf-15}. 
+	Finally, for n=15 branch and cut becomes has the most wins. The probability that it is the best algorithm is about .98. BHK dynamic programming is a factor of 2 slower than the best for 90\% of the problems as show in Figure~\ref{fig:perf-15}. 
 	
 	\begin{figure}[H]
 		\center
-		\includegraphics[width=0.95\textwidth]{../performanceplots/perf15.png}
+		\includegraphics[width=0.95\textwidth]{../performanceplots/perf15_norm.png}
 		\caption{Performance profiles of algorithms on instances of size 15.}
 		\label{fig:perf-15}
 	\end{figure}
+	\section{Future Work}
+	After a careful analysis of the data collected from experiments, we found that several seed and grid sizes were repeated in our experiment. This is due to the fact that the random numbers were generated between 1 and 100. For future experiments, we would like to ensure that no two random seeds are the same in our experiment. 
+	
+	In addition for an ideal experiment design, we would like to randomly assign grid sizes and city sizes during the experiment rather than iterating through them in order. Iterating through them in order may in fact be causing extra disk swapping. Once some algorithms reach n=20, they may consume more memory than the available physical RAM. Therefore, they may time out due to previous experiment runs that were swapping memory to disk. 
+	
 	\section{Conclusions}
 	\label{sec:conclusions}
+	For this project, we implemented four algorithms for solving the TSP and collected experimental results of their run times. The experimental data shows that the instance size, method, and seed have a significant effect on run times. As the number of cities increases from 5 to 25, enumeration is the best, succeeded by BHK dynamic programming, followed by branch and bound linear programming. Our performance profiles illustrate that these algorithms are the clear cut winner for 5, 10, and 15 cities. 
 	
 	
 	\nocite{*}
