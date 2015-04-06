@@ -61,7 +61,7 @@
 	
 	Many algorithms have been developed for the travelling salesman problem. Asymptotic behaviour can be analysed for these methods, but methods that are superior asymptotically may turn out to be slower for small problems due to large overhead costs. For example, enumerating all possible tours may take $O(n!)$ operations, but for a problem with only $n=5$ cities, could this be faster than the $O(n^2 2^n)$ Bellman-Held-Karp algorithm? This project explores such questions by implementing a few common algorithms for the travelling salesman problem, then comparing their run time for problems of varying sizes and types.
 	
-	Section \ref{sec:methods} outlines the algorithms that were implemented for this project, including some implementation details and optimizations. Section \ref{sec:data} describes the types of problems we ran the algorithms over. Section \ref{sec:environment} describes the environment in which we tested the algorithms. Section \ref{sec:discussion} discusses the results. Finally, Section \ref{sec:conclusions} summarizes the project. The raw timing data as well as our code are contained in the appendix.
+	Section \ref{sec:methods} outlines the algorithms that were implemented for this project, including some implementation details and optimizations. Section \ref{sec:data} describes the types of problems we ran the algorithms over. Section \ref{sec:environment} describes the environment in which we tested the algorithms. Sections \ref{sec:results} and \ref{sec:discussion} present and discuss the results. Section \ref{sec:future} discusses some future work. Finally, Section \ref{sec:conclusions} summarizes the project. The raw timing data as well as our code are contained in the appendix.
 	
 	\section{Methods}
 	\label{sec:methods}
@@ -69,7 +69,8 @@
 	\subsection{Enumeration}
 	The enumeration method for solving the TSP generates all possible tours and iterates through them. The possible tours are generated through a recursive call that swaps the positions of cities in the tour. In each recursive call, the number of cities to permute is reduced by one. When there are no more cities to permute, the recursive function compares the current tour length against the best one found, saving it if it is better than the previous value. 
 	
-	To save time, three simple optimizations are implemented in our version. First, if the tour length is greater than the best known tour, the search path is pruned. Second, instead of computing the tour length by adding up the edges at the base case of recursive calls, the recursive calls keep track of the tour length. Third, a macro is used to swap cities in the tour saving two function calls before and after permuting the order of cities. These simple optimizations give this $O(n!)$ algorithm better performance than more sophisticated algorithms on the smallest instances \cite{bico-1}. 
+	To save time, three simple optimizations are implemented in our version. First, instead of computing the tour length by adding up the edges at the base case of recursive calls, the recursive calls keep track of the tour length so far. Second, if the tour length so far is greater than the best known tour, the search path is pruned. Third, a macro is used to swap cities in the tour saving two function calls before and after permuting the order of cities. These simple optimizations give this $O(n!)$ algorithm better performance than more sophisticated algorithms on the smallest instances \cite{bico-1}.
+% Shawn: swapped the order of the first two optimizations above, since one doesn't make sense unless we're also doing the other.
 	
 	\subsection{Held-Karp 1-Trees}
 	
@@ -88,15 +89,15 @@
 	\[ C^* \geq \sum\limits_{(i,j) \in K^*} c_{i,j} + \sum\limits_i (2 - d_i)\pi_i = w(\ve{\pi}) \]
 	Where $K^*$ is the minimum cost 1-Tree defined on the graph modified by $\ve{\pi}$ and $d_i$ is the degree of node $i$ in that 1-Tree. 
 	
-	We note that because $\ve{\pi}$ defines a minimum cost 1-tree, we can consider our lower bounds on $C^*$ - the cost of the optimal tour - as simply a function of $\ve{\pi}$, namely $w(\ve{\pi})$. By modifying $\ve{\pi}$ the ascent algorithm attempts to produce minimum cost 1-trees that look more and more like tours, increase the lower bounds until eventually the optimal tour is found.
+	We note that because $\ve{\pi}$ defines a minimum cost 1-tree, we can consider our lower bounds on $C^*$ - the cost of the optimal tour - as simply a function of $\ve{\pi}$, namely $w(\ve{\pi})$. By modifying $\ve{\pi}$ the ascent algorithm attempts to produce minimum cost 1-trees that look more and more like tours, increasing the lower bound until the optimal tour is found.
 	
-	The algorithm we implemented consists of three main components. The first is the computation of the minimum cost 1-trees. This is a fairly simple process which involves computing a minimum spanning tree on all but one node and then adding that nodes two cheapest edges to the MST to produce a 1-tree. By repeating this process on each node, one of the 1-trees generated is guaranteed to be of minimum cost. The second component is a simple iterative algorithm to modify $\ve{pi}$. This is done by increasing and decreasing respectively the nodes in the 1-tree which have more or less than degree 2. The last component is a branching method. We used the technique used in homework 2 of forcing a particular edge into or out of the 1-trees. We kept our branching nodes in a priority queue so that as soon as we pop a 1-tree from our queue that is a tour, we know it is the optimal one.
+	The algorithm we implemented consists of three main components. The first is the computation of the minimum cost 1-trees. This is a fairly simple process which involves computing a minimum spanning tree on all but one node and then adding that node's two cheapest edges to the MST to produce a 1-tree. By repeating this process on each node, one of the 1-trees generated is guaranteed to be of minimum cost. The second component is a simple iterative algorithm to modify $\ve{\pi}$. This is done by increasing and decreasing respectively the nodes in the 1-tree which have more or less than degree 2. The last component is a branching method. We used the technique used in homework 2 of forcing a particular edge into or out of the 1-trees. We kept our branching nodes in a priority queue so that as soon as we pop a 1-tree from our queue that is a tour, we know it is the optimal one.
 	
 	Over the development of the 1-tree algorithm, many optimizations were made. Many were programming details, but I've outlined a few more significant changes that together greatly increased performance. Firstly, we modified our Kruskal code from homework 1 to work on the subsets of our graph, instead of building a subgraph every time we wanted to build an MST. Another optimization was to sort all the edges of the modified graph (modified weights) only once. In this way we can choose the two edges incident to our \emph{ignored} node during our modified Kruskal's algorithm, and not need to re-sort when we consider the next node to ignore. Since we are branching on the smallest lower bound in our priority queue, we cannot declare a tour we've found optimal until it has been popped from the queue. We can however update our upper bound on the tour cost. This helps with the pruning that occurs during the $\ve{\pi}$ iterations. Lastly, a seemingly minor change was to update our maximum lower bound seen in the iterations of $\ve{\pi}$ when the bound was greater than \emph{or equal} to our current max. Intuitively this makes sense because the iterations strive to produce 1-trees more resembling tours, so even if the bound itself is not changing, the 1-tree producing that bound is hopefully more tour-like.
 	
 	\subsection{Bellman-Held-Karp Dynamic Programming}
 	
-	The Bellman-Held-Karp algorithm was discovered independently by both Richard Bellman \cite{Bellman} and Michael Held and Richard Karp \cite{HeldKarp} in 1962. It uses dynamic programming, which means it uses the solutions of smaller problems to create a solution to the larger problem.
+	The Bellman-Held-Karp algorithm was discovered independently by both Richard Bellman \cite{Bellman} and Michael Held and Richard Karp \cite{HeldKarp} in 1962. It uses dynamic programming, which means it uses the solutions to smaller problems to create a solution to the larger problem.
 	
 	\subsubsection{Algorithm}
 	
@@ -132,9 +133,9 @@
 	
 	\subsection{Subtour Branch and Cut}
 	
-	The code we used for Branch and Cut was the code developed for homework 2, based on the board work and sample code seen in lectures. In particular, using subtour inequalities generated by finding disconnected components on the support graph generated from fractional LP solutions.
+	The code we used for Branch and Cut was the code developed for homework 2, based on the board work and sample code seen in lectures. In particular, it used subtour inequalities generated by finding disconnected components on the support graph generated from fractional LP solutions.
 	
-	We made a few improvements from the code we submitted for homework 2. The first was branching on the \emph{1-side} before the \emph{0-side}, when including/excluding edges in the LP formulation. Secondly, we improved our nearest neighbour tour upper bound by computing the nearest neighbour tour leaving from each node. This change actually affects all the methods which used pruning. 
+	We made a few improvements from the code we submitted for homework 2. The first was branching on the \emph{1-side} before the \emph{0-side} when including/excluding edges in the LP formulation. Secondly, we improved our nearest neighbour tour upper bound by computing the nearest neighbour tour for every possible start node then taking the minimum. This change improved all methods which used pruning. 
 	
 	\section{Problem Instances and Methods}
 	\label{sec:methodology}
@@ -158,6 +159,7 @@
 	To gather experimental data of the execution times of our algorithms on these test instances, we used DataMill. Datamill is an infrastructure for performance evaluation and has a cluster of computers for running benchmarks. We selected two machines for our experiment. Machine 1 has an Intel Core i5-2500 CPU with 8GB of RAM. Machine 2 has an AMD Opteron 8378 Processor with 32GB of RAM. Due to time constraints, experiments were run on all CPU cores with one process for each core. The code is compiled with GCC 4.7.3 using optimization flag \texttt{-O2}. Because most of our algorithms are known to have exponential worst case running times, we set a time limit of 10 minutes for all our test runs. For each combination of the two treatment factors, 144 trials were executed on both machines with a total of 3 grid sizes. 
 	
 	\section{Results}
+	\label{sec:results}
 	\begin{table}
 	\centering
 	\begin{tabular}{r|r|rr}
@@ -207,7 +209,7 @@
 \end{table}
 	To analyze the results, the data is separated by number of cities. Data gathered for instance sizes of 5 to 19, 20 to 25, and 26 to 32 were partitioned into separate files for each machine. This  produces better analysis of the effect of factors on run times. Methods that time out at a certain size are ignored, as missing data can result in biased ANOVA analysis. 
 	
-	The experimental results Table~\ref{tab:runtime_small_anova} show that for small instances, different grid sizes have the same effect on the run time. This is indicated by a p-value much less than 95\%. Thus, changing grid sizes for small instances has an uncertain effect on execution time. However, other factors all have a significant effect on execution time with a confidence interval greater than 99\%. The same trend continues with instance size, method, and seed on instances of 20 to 25 cities in Table~\ref{tab:runtime_medium_anova}, with the grid size showing a significant effect on execution time. 
+	The experimental results in Table~\ref{tab:runtime_small_anova} show that for small instances, different grid sizes have the same effect on the run time. This is indicated by a p-value much less than 95\%. Thus, changing grid sizes for small instances has an uncertain effect on execution time. However, other factors all have a significant effect on execution time with a confidence interval greater than 99\%. The same trend continues with instance size, method, and seed on instances of 20 to 25 cities in Table~\ref{tab:runtime_medium_anova}, with the grid size showing a significant effect on execution time. 
 
 	
 	
@@ -268,9 +270,10 @@ From these plots we can see some clear thresholds on which algorithms perform be
 		\label{fig:perf-15}
 	\end{figure}
 	\section{Future Work}
+	\label{sec:future}
 	After a careful analysis of the data collected from experiments, we found that several seed and grid sizes were repeated in our experiment. This is due to the fact that the random numbers were generated between 1 and 100. For future experiments, we would like to ensure that no two random seeds are the same in our experiment. 
 	
-	In addition for an ideal experiment design, we would like to randomly assign grid sizes and city sizes during the experiment rather than iterating through them in order. Iterating through them in order may in fact be causing extra disk swapping. Once some algorithms reach n=20, they may consume more memory than the available physical RAM. Therefore, they may time out due to previous experiment runs that were swapping memory to disk. 
+	In addition, for an ideal experiment design we would like to randomly assign grid sizes and city sizes during the experiment rather than iterating through them in order. Iterating through them in order may in fact be causing extra disk swapping. Once some algorithms reach n=20, they may consume more memory than the available physical RAM. Therefore, they may time out due to previous experiment runs that were swapping memory to disk. 
 	
 	\section{Conclusions}
 	\label{sec:conclusions}
